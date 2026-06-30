@@ -58,6 +58,7 @@
     var card = document.createElement("div");
     card.className = "explore-card";
 
+    var imgCount = (item.output_urls && item.output_urls.length) || 0;
     var thumbUrl = (item.thumb_urls && item.thumb_urls[0]) || (item.output_urls && item.output_urls[0]) || "";
     var imgWrap = document.createElement("div");
     imgWrap.className = "explore-card-img-wrapper";
@@ -66,6 +67,14 @@
     img.loading = "lazy";
     if (thumbUrl) img.src = thumbUrl;
     imgWrap.appendChild(img);
+
+    if (imgCount > 1) {
+      var badge = document.createElement("span");
+      badge.className = "explore-card-badge";
+      badge.textContent = "×" + imgCount;
+      imgWrap.appendChild(badge);
+    }
+
     card.appendChild(imgWrap);
 
     var body = document.createElement("div");
@@ -146,6 +155,87 @@
       });
   }
 
+  var currentGalleryKeyHandler = null;
+
+  function buildGallery(outputUrls) {
+    var container = document.createElement("div");
+    container.className = "explore-modal-gallery";
+
+    var mainWrap = document.createElement("div");
+    mainWrap.className = "explore-modal-gallery-main";
+
+    var img = document.createElement("img");
+    img.className = "explore-modal-img";
+    img.src = outputUrls[0];
+    mainWrap.appendChild(img);
+
+    var prevBtn = document.createElement("button");
+    prevBtn.className = "explore-modal-gallery-nav explore-modal-gallery-prev";
+    prevBtn.textContent = "\u2039";
+    prevBtn.setAttribute("aria-label", "prev");
+    mainWrap.appendChild(prevBtn);
+
+    var nextBtn = document.createElement("button");
+    nextBtn.className = "explore-modal-gallery-nav explore-modal-gallery-next";
+    nextBtn.textContent = "\u203a";
+    nextBtn.setAttribute("aria-label", "next");
+    mainWrap.appendChild(nextBtn);
+
+    var counter = document.createElement("span");
+    counter.className = "explore-modal-gallery-counter";
+    counter.textContent = "1/" + outputUrls.length;
+    mainWrap.appendChild(counter);
+
+    var thumbs = null;
+    if (outputUrls.length > 1) {
+      thumbs = document.createElement("div");
+      thumbs.className = "explore-modal-gallery-thumbs";
+      outputUrls.forEach(function (url, i) {
+        var t = document.createElement("button");
+        t.className = "explore-modal-gallery-thumb";
+        var tImg = document.createElement("img");
+        tImg.src = url;
+        tImg.loading = "lazy";
+        t.appendChild(tImg);
+        if (i === 0) t.classList.add("active");
+        t.addEventListener("click", function () { setIndex(i); });
+        thumbs.appendChild(t);
+      });
+    }
+
+    var currentIdx = 0;
+    function setIndex(i) {
+      currentIdx = i;
+      img.src = outputUrls[i];
+      counter.textContent = (i + 1) + "/" + outputUrls.length;
+      if (thumbs) {
+        Array.prototype.forEach.call(thumbs.children, function (el, j) {
+          el.classList.toggle("active", j === i);
+        });
+      }
+      prevBtn.disabled = (i === 0);
+      nextBtn.disabled = (i === outputUrls.length - 1);
+    }
+
+    prevBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (currentIdx > 0) setIndex(currentIdx - 1);
+    });
+    nextBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (currentIdx < outputUrls.length - 1) setIndex(currentIdx + 1);
+    });
+
+    setIndex(0);
+    container.appendChild(mainWrap);
+    if (thumbs) container.appendChild(thumbs);
+    container._galleryKeyHandler = function (e) {
+      if (e.key === "ArrowLeft" && currentIdx > 0) setIndex(currentIdx - 1);
+      if (e.key === "ArrowRight" && currentIdx < outputUrls.length - 1) setIndex(currentIdx + 1);
+    };
+    return container;
+  }
+
   function openModal(item) {
     while (modal.firstChild) modal.removeChild(modal.firstChild);
 
@@ -154,16 +244,14 @@
 
     var closeBtn = document.createElement("button");
     closeBtn.className = "explore-modal-close";
-    closeBtn.textContent = "×";
+    closeBtn.textContent = "\u00d7";
     closeBtn.setAttribute("aria-label", t.close);
     closeBtn.addEventListener("click", closeModal);
     card.appendChild(closeBtn);
 
     if (item.output_urls && item.output_urls.length > 0) {
-      var img = document.createElement("img");
-      img.className = "explore-modal-img";
-      img.src = item.output_urls[0];
-      card.appendChild(img);
+      var gallery = buildGallery(item.output_urls);
+      card.appendChild(gallery);
     }
 
     if (item.prompt) {
@@ -216,6 +304,10 @@
 
     modal.addEventListener("click", modalOverlayClick);
     document.addEventListener("keydown", modalKeydown);
+    if (gallery && gallery._galleryKeyHandler) {
+      document.addEventListener("keydown", gallery._galleryKeyHandler);
+      currentGalleryKeyHandler = gallery._galleryKeyHandler;
+    }
   }
 
   function modalOverlayClick(e) {
@@ -231,6 +323,10 @@
     while (modal.firstChild) modal.removeChild(modal.firstChild);
     modal.removeEventListener("click", modalOverlayClick);
     document.removeEventListener("keydown", modalKeydown);
+    if (currentGalleryKeyHandler) {
+      document.removeEventListener("keydown", currentGalleryKeyHandler);
+      currentGalleryKeyHandler = null;
+    }
   }
 
   if ("IntersectionObserver" in window) {
