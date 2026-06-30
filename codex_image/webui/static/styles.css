@@ -1140,8 +1140,8 @@ button, input, select, textarea {
 .task-share-button {
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   border-radius: 50%;
   cursor: pointer;
@@ -1346,8 +1346,8 @@ button, input, select, textarea {
 
 .task-action-icon {
   display: block;
-  width: 12px;
-  height: 12px;
+  width: 22px;
+  height: 22px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
