@@ -59,11 +59,14 @@
     card.className = "explore-card";
 
     var thumbUrl = (item.thumb_urls && item.thumb_urls[0]) || (item.output_urls && item.output_urls[0]) || "";
+    var imgWrap = document.createElement("div");
+    imgWrap.className = "explore-card-img-wrapper";
     var img = document.createElement("img");
     img.className = "explore-card-img";
     img.loading = "lazy";
     if (thumbUrl) img.src = thumbUrl;
-    card.appendChild(img);
+    imgWrap.appendChild(img);
+    card.appendChild(imgWrap);
 
     var body = document.createElement("div");
     body.className = "explore-card-body";
