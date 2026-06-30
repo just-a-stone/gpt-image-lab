@@ -1148,10 +1148,9 @@ button, input, select, textarea {
   transition: background var(--motion-base), border-color var(--motion-base), color var(--motion-base);
 }
 
-.task-archive-button {
-  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
-  background: var(--surface-soft);
-  color: var(--primary-strong);
+.task-archive-button:hover {
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  border-color: var(--primary);
 }
 
 .task-delete-button {
@@ -1160,10 +1159,22 @@ button, input, select, textarea {
   color: var(--text-secondary);
 }
 
+.task-delete-button:hover {
+  background: color-mix(in srgb, var(--destructive, #ef4444) 15%, transparent);
+  border-color: var(--destructive, #ef4444);
+  color: var(--destructive, #ef4444);
+}
+
 .task-share-button {
   border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
   background: var(--surface-soft);
   color: var(--primary-strong);
+}
+
+.task-share-button:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
 }
 
 .explore-link {
