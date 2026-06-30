@@ -11,7 +11,7 @@ const MIN_SYSTEM_SETTINGS_MODAL_EDGE = 30;
 const VALID_TABS = new Set<SystemSettingsTab>(["api", "codex", "language", "storage"]);
 
 function normalizedTab(tab: any): SystemSettingsTab {
-  return VALID_TABS.has(tab) ? tab : "api";
+  return VALID_TABS.has(tab) ? tab : "language";
 }
 
 function maybeCall(name: string, ...args: any[]): void {
@@ -127,7 +127,7 @@ export function setSystemSettingsTab(tab: any, options: { refresh?: boolean } = 
   if (animateHeight && panel) animateSystemSettingsPanelHeight(panel, beforeHeight);
 }
 
-export function openSystemSettingsModal(tab: any = "api"): void {
+export function openSystemSettingsModal(tab: any = "language"): void {
   const { els } = getLegacyBridge();
   const wasHidden = els.systemSettingsModal?.classList.contains("hidden") ?? true;
   setSystemSettingsTab(tab);

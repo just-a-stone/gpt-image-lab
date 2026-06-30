@@ -237,7 +237,7 @@ def create_app(
     make_client = client_factory or (lambda: _client_for_auth_source(auth_settings.read_source(), api_settings=api_settings))
     check_auth = auth_checker or (lambda: bool(_auth_status(auth_settings.read_source(), api_settings=api_settings)["auth_available"]))
 
-    app = FastAPI(title="iLab GPT CONJURE", lifespan=queue_lifespan)
+    app = FastAPI(title="Fei Yang Lab CONJURE", lifespan=queue_lifespan)
     ctx = WebUIContext(
         app=app,
         storage=storage,
@@ -277,7 +277,7 @@ def create_app(
         if index_path.exists():
             return FileResponse(index_path, headers={"Cache-Control": "no-store"})
         return HTMLResponse(
-            "<!doctype html><title>iLab GPT CONJURE</title><h1>iLab GPT CONJURE</h1>",
+            "<!doctype html><title>Fei Yang Lab CONJURE</title><h1>Fei Yang Lab CONJURE</h1>",
             headers={"Cache-Control": "no-store"},
         )
 
@@ -287,7 +287,7 @@ def create_app(
         if history_path.exists():
             return FileResponse(history_path, headers={"Cache-Control": "no-store"})
         return HTMLResponse(
-            "<!doctype html><title>History - iLab GPT CONJURE</title><h1>History</h1>",
+            "<!doctype html><title>History - Fei Yang Lab CONJURE</title><h1>History</h1>",
             headers={"Cache-Control": "no-store"},
         )
 

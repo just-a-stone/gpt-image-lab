@@ -493,7 +493,7 @@ export function openApiSettingsModal(): void {
   state.apiProviderDraftIsNew = false;
   populateApiSettingsForm();
   setApiSettingsFeedback("", "");
-  openSystemSettingsModal("api");
+  openSystemSettingsModal("language");
 }
 
 export function closeApiSettingsModal(): void {

@@ -11502,3 +11502,140 @@ body.history-lightbox-open {
     transition: none;
   }
 }
+
+/* source: styles/95-byok.css */
+.byok-toggle-button {
+  margin-left: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border: 1px solid var(--panel-border);
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.byok-toggle-button:hover {
+  color: var(--text);
+  border-color: var(--primary);
+}
+
+.byok-toggle-button.active {
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.byok-popover {
+  position: fixed;
+  top: 64px;
+  right: 16px;
+  z-index: 2200;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  background: var(--surface);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-popover);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.byok-popover.hidden {
+  display: none;
+}
+
+.byok-popover-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.byok-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.byok-field input {
+  padding: 6px 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.byok-field input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.byok-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.byok-checkbox input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.byok-checkbox input[type="checkbox"]:disabled + span {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.byok-popover-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.byok-popover-actions .primary-button {
+  flex: 1;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.byok-popover-actions .ghost-button {
+  padding: 7px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* BYOK-only deployment: hide server-side API / Codex configuration UI.
+   Keeps BYOK (header) + Language settings as the only surfaces. */
+#systemSettingsApiTab,
+#systemSettingsCodexTab,
+#systemSettingsStorageTab,
+#systemSettingsApiPanel,
+#systemSettingsCodexPanel,
+#systemSettingsStoragePanel,
+.auth-source-group,
+#authSourceDetail,
+#apiDirectSettingsNotice,
+#webSearchField,
+#githubLink,
+#versionInfo {
+  display: none !important;
+}

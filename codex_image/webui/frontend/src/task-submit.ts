@@ -1,5 +1,6 @@
 import { getLegacyBridge } from "./state";
 import { translate } from "./i18n";
+import { appendByokToForm, isByokActive } from "./byok";
 
 const bridge = getLegacyBridge();
 const state = bridge.state;
@@ -266,6 +267,12 @@ function addQueuedTask(task: any) {
 async function runTask() {
   syncPromptFromEditor();
   syncGalleryInputsFromPrompt();
+  if (!isByokActive()) {
+    setStatus("请先在「🔑 自带Key」中填入 API Key", "error");
+    document.getElementById("byokPopover")?.classList.remove("hidden");
+    (document.getElementById("byokApiKeyInput") as HTMLInputElement | null)?.focus();
+    return;
+  }
   const prompt = getPromptText();
   const promptForModel = currentPromptForModel();
   const uploads = uploadInputs();
@@ -317,6 +324,7 @@ async function runTask() {
   } else if (currentAuthSource() === "codex") {
     form.append("codex_mode", currentCodexMode());
   }
+  appendByokToForm(form);
   if (els.outputFormat.value !== "png") {
     form.append("output_compression", String(params.output_compression));
   }

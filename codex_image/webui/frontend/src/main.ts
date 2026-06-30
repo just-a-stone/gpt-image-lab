@@ -1,5 +1,6 @@
 import "../legacy-app.js";
 import { initInputSourcesFeature } from "./input-sources";
+import { initByokFeature } from "./byok";
 import { initImageEditorFeature } from "./image-editor";
 import { initImageStripFeature } from "./image-strip";
 import { initGalleryCategoriesFeature } from "./gallery-categories";
@@ -41,6 +42,7 @@ import { initSegmentedIndicatorFeature } from "./segmented-indicator";
 import { initI18nFeature } from "./i18n";
 
 initInputSourcesFeature();
+initByokFeature();
 initImageEditorFeature();
 initImageStripFeature();
 initGalleryCategoriesFeature();

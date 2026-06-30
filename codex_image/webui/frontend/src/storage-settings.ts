@@ -42,7 +42,7 @@ function openSettingsModal() {
   closePromptPopover();
   refreshSettings();
   if (els.settingsStatus) els.settingsStatus.textContent = translate("settings.status");
-  openSystemSettingsModal("storage");
+  openSystemSettingsModal("language");
 }
 
 function closeSettingsModal() {

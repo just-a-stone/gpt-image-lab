@@ -658,11 +658,11 @@ class WebUIStaticLayoutTests(WebUIStaticTestCase):
         html = Path("codex_image/webui/static/index.html").read_text(encoding="utf-8")
         styles = Path("codex_image/webui/static/styles.css").read_text(encoding="utf-8")
 
-        self.assertIn("<title>iLab GPT CONJURE</title>", html)
+        self.assertIn("<title>Fei Yang Lab CONJURE</title>", html)
         self.assertIn('<div class="brand-lockup">', html)
-        self.assertIn('<div class="brand-name">iLab GPT</div>', html)
+        self.assertIn('<div class="brand-name">Fei Yang Lab</div>', html)
         self.assertIn('<div class="brand-subtitle">CONJURE</div>', html)
-        self.assertIn('aria-label="iLab GPT CONJURE"', html)
+        self.assertIn('aria-label="Fei Yang Lab CONJURE"', html)
         self.assertNotIn("GPT-image-2 Studio", html)
 
         self.assertRegex(styles, r"\.brand-mark\s*\{[^}]*width:\s*42px")
@@ -867,8 +867,8 @@ class WebUIStaticLayoutTests(WebUIStaticTestCase):
             Path("Start WebUI.bat").read_text(encoding="utf-8"),
         ]
 
-        self.assertIn('FastAPI(title="iLab GPT CONJURE"', app_source)
-        self.assertIn("<title>iLab GPT CONJURE</title><h1>iLab GPT CONJURE</h1>", app_source)
+        self.assertIn('FastAPI(title="Fei Yang Lab CONJURE"', app_source)
+        self.assertIn("<title>Fei Yang Lab CONJURE</title><h1>Fei Yang Lab CONJURE</h1>", app_source)
         self.assertNotIn("GPT-image-2 Studio", app_source)
         for source in launcher_sources:
             self.assertIn("iLab GPT CONJURE", source)
@@ -2851,7 +2851,7 @@ class WebUIStaticLayoutTests(WebUIStaticTestCase):
         self.assertIn('id="settingsGalleryRoot"', html)
         self.assertIn('id="settingsSourceDataRoot"', html)
         self.assertIn('id="saveSettingsButton"', html)
-        self.assertIn('openSystemSettingsModal("storage")', script)
+        self.assertIn('openSystemSettingsModal("language")', script)
         self.assertIn('fetch("/api/settings")', script)
         self.assertIn('fetch("/api/settings", {', script)
         self.assertIn("restart_required", script)

@@ -8,7 +8,12 @@ from typing import Any, AsyncContextManager, Callable
 from fastapi import FastAPI
 
 from codex_image.auth import load_auth_state
-from codex_image.client import CodexImageClient, CodexImagesImageClient
+from codex_image.client import (
+    DEFAULT_IMAGE_MODEL,
+    DEFAULT_OPENAI_API_BASE_URL,
+    CodexImageClient,
+    CodexImagesImageClient,
+)
 
 from .auth_routing import (
     DEFAULT_API_PROVIDER_ID,
@@ -108,8 +113,16 @@ def _client_for_queue_channel(ctx: WebUIContext, channel: QueueChannel, metadata
     if client_factory_overridden:
         return ctx.client_factory()
     if channel.auth_source == "api":
-        settings_payload = ctx.api_settings.read()
         params = metadata.get("params") if isinstance(metadata, dict) and isinstance(metadata.get("params"), dict) else {}
+        byok_key = str(params.get("byok_api_key") or "").strip()
+        if byok_key:
+            byok_settings = {
+                "api_key": byok_key,
+                "base_url": str(params.get("byok_base_url") or "").strip() or DEFAULT_OPENAI_API_BASE_URL,
+                "image_model": str(params.get("byok_image_model") or "").strip() or DEFAULT_IMAGE_MODEL,
+            }
+            return _api_client_from_settings(byok_settings, api_mode="images")
+        settings_payload = ctx.api_settings.read()
         provider_settings = ctx.api_settings.provider_settings(str(params.get("api_provider_id") or settings_payload.get("active_provider_id") or ""))
         api_mode = _normalize_api_mode(params.get("api_mode") or provider_settings.get("api_mode"))
         return _api_client_from_settings(provider_settings, api_mode=api_mode)

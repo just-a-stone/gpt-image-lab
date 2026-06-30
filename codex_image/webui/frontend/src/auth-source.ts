@@ -1,6 +1,7 @@
 import { getLegacyBridge } from "./state";
 import { updateModeSpecificSettings } from "./api-mode-settings";
 import { formatTranslation, translate } from "./i18n";
+import { isByokActive } from "./byok";
 
 const bridge = getLegacyBridge();
 const state = bridge.state;
@@ -29,9 +30,10 @@ export async function refreshHealth(): Promise<void> {
     state.authAvailable = Boolean(data.auth_available);
     state.authStatus = data.auth || null;
     renderAuthSource(state.authStatus);
+    const effectiveAvailable = state.authAvailable || isByokActive();
     els.apiStatus.className = `status-dot ${state.authAvailable ? "ok" : "error"}`;
-    els.runButton.disabled = !state.authAvailable;
-    if (!state.authAvailable) {
+    els.runButton.disabled = !effectiveAvailable;
+    if (!effectiveAvailable) {
       setStatus(translate("auth.missingCodexSession"), "error");
     }
     updateRequestPreview();
@@ -126,6 +128,7 @@ export function sourceLabel(source: any): string {
 }
 
 export function currentAuthSource(): string {
+  if (isByokActive()) return "api";
   return state.pendingAuthSource || state.authStatus?.selected_source || "codex";
 }
 

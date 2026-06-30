@@ -562,7 +562,7 @@
     "footer.archiveCount": "Archive {count}",
     "footer.historyLibrary": "History",
     "historyLibrary.openFull": "Open full history library",
-    "history.documentTitle": "History - iLab GPT CONJURE",
+    "history.documentTitle": "History - Fei Yang Lab CONJURE",
     "history.back": "Back to generator",
     "history.title": "History",
     "history.loading": "Loading",
@@ -1455,7 +1455,7 @@
     "footer.archiveCount": "Archiv {count}",
     "footer.historyLibrary": "Geschichte",
     "historyLibrary.openFull": "\xD6ffnen Sie die vollst\xE4ndige Geschichtsbibliothek",
-    "history.documentTitle": "Geschichte \u2013 iLab GPT CONJURE",
+    "history.documentTitle": "Geschichte \u2013 Fei Yang Lab CONJURE",
     "history.back": "Zur\xFCck zum Generator",
     "history.title": "Geschichte",
     "history.loading": "Laden",
@@ -2348,7 +2348,7 @@
     "footer.archiveCount": "Archivo {count}",
     "footer.historyLibrary": "Historia",
     "historyLibrary.openFull": "Abrir biblioteca de historia completa",
-    "history.documentTitle": "Historia - iLab GPT CONJURE",
+    "history.documentTitle": "Historia - Fei Yang Lab CONJURE",
     "history.back": "Volver al generador",
     "history.title": "Historia",
     "history.loading": "Cargando",
@@ -3241,7 +3241,7 @@
     "footer.archiveCount": "Archiver {count}",
     "footer.historyLibrary": "Histoire",
     "historyLibrary.openFull": "Ouvrir la biblioth\xE8que d'historique compl\xE8te",
-    "history.documentTitle": "Histoire - iLab GPT CONJURE",
+    "history.documentTitle": "Histoire - Fei Yang Lab CONJURE",
     "history.back": "Retour au g\xE9n\xE9rateur",
     "history.title": "Histoire",
     "history.loading": "Chargement",
@@ -4134,7 +4134,7 @@
     "footer.archiveCount": "\u30A2\u30FC\u30AB\u30A4\u30D6 {count}",
     "footer.historyLibrary": "\u5C65\u6B74",
     "historyLibrary.openFull": "\u5C65\u6B74\u30E9\u30A4\u30D6\u30E9\u30EA\u5168\u4F53\u3092\u958B\u304F",
-    "history.documentTitle": "\u5C65\u6B74 - iLab GPT CONJURE",
+    "history.documentTitle": "\u5C65\u6B74 - Fei Yang Lab CONJURE",
     "history.back": "\u30B8\u30A7\u30CD\u30EC\u30FC\u30BF\u30FC\u306B\u623B\u308B",
     "history.title": "\u5C65\u6B74",
     "history.loading": "\u8AAD\u307F\u8FBC\u307F\u4E2D",
@@ -5027,7 +5027,7 @@
     "footer.archiveCount": "\uBCF4\uAD00\uD568 {count}",
     "footer.historyLibrary": "\uAE30\uB85D",
     "historyLibrary.openFull": "\uC804\uCCB4 \uAE30\uB85D \uB77C\uC774\uBE0C\uB7EC\uB9AC \uC5F4\uAE30",
-    "history.documentTitle": "\uAE30\uB85D - iLab GPT CONJURE",
+    "history.documentTitle": "\uAE30\uB85D - Fei Yang Lab CONJURE",
     "history.back": "\uC0DD\uC131\uAE30\uB85C \uB3CC\uC544\uAC00\uAE30",
     "history.title": "\uAE30\uB85D",
     "history.loading": "\uB85C\uB4DC \uC911",
@@ -5920,7 +5920,7 @@
     "footer.archiveCount": "Arquivo {count}",
     "footer.historyLibrary": "Hist\xF3ria",
     "historyLibrary.openFull": "Abra a biblioteca de hist\xF3rico completa",
-    "history.documentTitle": "Hist\xF3ria - iLab GPT CONJURE",
+    "history.documentTitle": "Hist\xF3ria - Fei Yang Lab CONJURE",
     "history.back": "Voltar ao gerador",
     "history.title": "Hist\xF3ria",
     "history.loading": "Carregando",
@@ -6813,7 +6813,7 @@
     "footer.archiveCount": "\u0410\u0440\u0445\u0438\u0432 {count}",
     "footer.historyLibrary": "\u0418\u0441\u0442\u043E\u0440\u0438\u044F",
     "historyLibrary.openFull": "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043F\u043E\u043B\u043D\u0443\u044E \u0431\u0438\u0431\u043B\u0438\u043E\u0442\u0435\u043A\u0443 \u0438\u0441\u0442\u043E\u0440\u0438\u0438",
-    "history.documentTitle": "\u0418\u0441\u0442\u043E\u0440\u0438\u044F - iLab GPT CONJURE",
+    "history.documentTitle": "\u0418\u0441\u0442\u043E\u0440\u0438\u044F - Fei Yang Lab CONJURE",
     "history.back": "\u0412\u0435\u0440\u043D\u0443\u0442\u044C\u0441\u044F \u043A \u0433\u0435\u043D\u0435\u0440\u0430\u0442\u043E\u0440\u0443",
     "history.title": "\u0418\u0441\u0442\u043E\u0440\u0438\u044F",
     "history.loading": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430",
@@ -7706,7 +7706,7 @@
     "footer.archiveCount": "Archivio {count}",
     "footer.historyLibrary": "Storia",
     "historyLibrary.openFull": "Apri la libreria della cronologia completa",
-    "history.documentTitle": "Storia - iLab GPT CONJURE",
+    "history.documentTitle": "Storia - Fei Yang Lab CONJURE",
     "history.back": "Torniamo al generatore",
     "history.title": "Storia",
     "history.loading": "Caricamento in corso",
@@ -9492,7 +9492,7 @@
     "footer.archiveCount": "\u4F1A\u8BDD\u5F52\u6863 {count}",
     "footer.historyLibrary": "\u5386\u53F2\u5E93",
     "historyLibrary.openFull": "\u6253\u5F00\u5B8C\u6574\u5386\u53F2\u5E93",
-    "history.documentTitle": "\u5386\u53F2\u5E93 - iLab GPT CONJURE",
+    "history.documentTitle": "\u5386\u53F2\u5E93 - Fei Yang Lab CONJURE",
     "history.back": "\u8FD4\u56DE\u751F\u6210\u9875",
     "history.title": "\u5386\u53F2\u5E93",
     "history.loading": "\u8F7D\u5165\u4E2D",
@@ -12458,7 +12458,7 @@
   var DEFAULT_CODEX_MODE = "images";
   var DEFAULT_API_IMAGES_CONCURRENCY = 4;
   var API_SETTINGS_STORAGE_KEY = "codex-image-api-settings";
-  var DEFAULT_DOCUMENT_TITLE = document.title || "iLab GPT CONJURE";
+  var DEFAULT_DOCUMENT_TITLE = document.title || "Fei Yang Lab CONJURE";
   var TASK_HISTORY_EXPANDED_GROUP_STORAGE_KEY = "codex-image-task-history-expanded-group";
   function defaultGalleryCategories() {
     return DEFAULT_GALLERY_CATEGORIES.map((category) => ({ ...category }));
@@ -13256,6 +13256,155 @@
       imageFileFromUrl,
       restoreHistoryReferenceHandoff
     });
+  }
+
+  // codex_image/webui/frontend/src/byok.ts
+  var BYOK_STORAGE_KEY = "ilab_byok_creds";
+  var DEFAULT_BYOK_BASE_URL = "https://image.feiyang.click/v1";
+  function getByokCreds() {
+    try {
+      const raw = localStorage.getItem(BYOK_STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return null;
+      return {
+        apiKey: String(parsed.apiKey || ""),
+        baseUrl: String(parsed.baseUrl || ""),
+        imageModel: String(parsed.imageModel || ""),
+        enabled: Boolean(parsed.enabled)
+      };
+    } catch {
+      return null;
+    }
+  }
+  function isByokActive() {
+    const creds = getByokCreds();
+    return Boolean(creds && creds.apiKey.trim());
+  }
+  function saveByokCreds(creds) {
+    localStorage.setItem(BYOK_STORAGE_KEY, JSON.stringify(creds));
+  }
+  function clearByokCreds() {
+    localStorage.removeItem(BYOK_STORAGE_KEY);
+  }
+  function appendByokToForm(form) {
+    if (!isByokActive()) return false;
+    const creds = getByokCreds();
+    if (!creds) return false;
+    form.append("byok_api_key", creds.apiKey.trim());
+    const baseUrl = creds.baseUrl.trim() || DEFAULT_BYOK_BASE_URL;
+    form.append("byok_base_url", baseUrl);
+    if (creds.imageModel.trim()) form.append("byok_image_model", creds.imageModel.trim());
+    return true;
+  }
+  function refreshRunButton() {
+    const bridge39 = getLegacyBridge();
+    const els43 = bridge39.els;
+    if (!els43?.runButton) return;
+    const available = Boolean(bridge39.state.authAvailable) || isByokActive();
+    els43.runButton.disabled = !available;
+  }
+  function updateByokIndicator() {
+    const button = document.getElementById("byokToggleButton");
+    if (!button) return;
+    button.classList.toggle("active", isByokActive());
+    button.textContent = isByokActive() ? "\u{1F511} \u81EA\u5E26Key \xB7 \u5DF2\u542F\u7528" : "\u{1F511} \u81EA\u5E26Key";
+  }
+  function bindByokPopover() {
+    const popover = document.getElementById("byokPopover");
+    const keyInput = document.getElementById("byokApiKeyInput");
+    const baseUrlInput = document.getElementById("byokBaseUrlInput");
+    const modelInput = document.getElementById("byokImageModelInput");
+    const enabledToggle = document.getElementById("byokEnabledToggle");
+    const saveButton = document.getElementById("byokSaveButton");
+    const clearButton = document.getElementById("byokClearButton");
+    const closeButton = document.getElementById("byokCloseButton");
+    if (!popover || !keyInput || !baseUrlInput || !modelInput || !enabledToggle || !saveButton || !clearButton || !closeButton) return;
+    const creds = getByokCreds();
+    keyInput.value = creds?.apiKey || "";
+    baseUrlInput.value = creds?.baseUrl || DEFAULT_BYOK_BASE_URL;
+    modelInput.value = creds?.imageModel || "";
+    enabledToggle.checked = true;
+    enabledToggle.disabled = true;
+    const persist = () => {
+      saveByokCreds({
+        apiKey: keyInput.value.trim(),
+        baseUrl: baseUrlInput.value.trim(),
+        imageModel: modelInput.value.trim(),
+        enabled: true
+      });
+      updateByokIndicator();
+      refreshRunButton();
+      getLegacyBridge().methods.updateRequestPreview?.();
+    };
+    saveButton.addEventListener("click", persist);
+    clearButton.addEventListener("click", () => {
+      clearByokCreds();
+      keyInput.value = "";
+      baseUrlInput.value = "";
+      modelInput.value = "";
+      enabledToggle.checked = true;
+      updateByokIndicator();
+      refreshRunButton();
+      getLegacyBridge().methods.updateRequestPreview?.();
+    });
+    closeButton.addEventListener("click", () => popover.classList.add("hidden"));
+  }
+  function injectByokUi() {
+    const switcher = document.querySelector(".auth-source-switcher");
+    if (!switcher) return;
+    if (document.getElementById("byokToggleButton")) return;
+    const button = document.createElement("button");
+    button.id = "byokToggleButton";
+    button.type = "button";
+    button.className = "auth-source-button byok-toggle-button";
+    button.textContent = "\u{1F511} \u81EA\u5E26Key";
+    button.title = "\u4F7F\u7528\u81EA\u5DF1\u7684 API Key\uFF08\u6D4F\u89C8\u5668\u672C\u5730\u4FDD\u5B58\uFF09";
+    button.addEventListener("click", () => {
+      const popover2 = document.getElementById("byokPopover");
+      if (popover2) popover2.classList.toggle("hidden");
+    });
+    switcher.appendChild(button);
+    const popover = document.createElement("div");
+    popover.id = "byokPopover";
+    popover.className = "byok-popover hidden";
+    popover.setAttribute("role", "dialog");
+    popover.innerHTML = `
+    <div class="byok-popover-title">\u81EA\u5E26 API Key\uFF08\u4EC5\u4FDD\u5B58\u5728\u672C\u6D4F\u89C8\u5668\uFF09</div>
+    <label class="byok-field">
+      <span>API Key</span>
+      <input id="byokApiKeyInput" type="password" autocomplete="off" placeholder="sk-..." />
+    </label>
+    <label class="byok-field">
+      <span>Base URL</span>
+      <input id="byokBaseUrlInput" type="text" autocomplete="off" placeholder="https://image.feiyang.click/v1" />
+    </label>
+    <label class="byok-field">
+      <span>\u56FE\u50CF\u6A21\u578B</span>
+      <input id="byokImageModelInput" type="text" autocomplete="off" placeholder="gpt-image-2" />
+    </label>
+    <label class="byok-checkbox">
+      <input id="byokEnabledToggle" type="checkbox" checked disabled />
+      <span>\u542F\u7528 BYOK\uFF08\u59CB\u7EC8\u5F00\u542F\uFF09</span>
+    </label>
+    <div class="byok-popover-actions">
+      <button id="byokSaveButton" type="button" class="primary-button">\u4FDD\u5B58</button>
+      <button id="byokClearButton" type="button" class="ghost-button">\u6E05\u9664</button>
+      <button id="byokCloseButton" type="button" class="ghost-button">\u5173\u95ED</button>
+    </div>
+  `;
+    document.body.appendChild(popover);
+    bindByokPopover();
+    updateByokIndicator();
+  }
+  function initByokFeature() {
+    injectByokUi();
+    Object.assign(getLegacyBridge().methods, {
+      isByokActive,
+      appendByokToForm,
+      refreshByokRunButton: refreshRunButton
+    });
+    refreshRunButton();
   }
 
   // node_modules/konva/lib/Global.js
@@ -28819,9 +28968,10 @@ ${hint}` : hint;
       state8.authAvailable = Boolean(data.auth_available);
       state8.authStatus = data.auth || null;
       renderAuthSource(state8.authStatus);
+      const effectiveAvailable = state8.authAvailable || isByokActive();
       els9.apiStatus.className = `status-dot ${state8.authAvailable ? "ok" : "error"}`;
-      els9.runButton.disabled = !state8.authAvailable;
-      if (!state8.authAvailable) {
+      els9.runButton.disabled = !effectiveAvailable;
+      if (!effectiveAvailable) {
         setStatus7(translate("auth.missingCodexSession"), "error");
       }
       updateRequestPreview4();
@@ -28909,6 +29059,7 @@ ${hint}` : hint;
     return translate("auth.notActive");
   }
   function currentAuthSource2() {
+    if (isByokActive()) return "api";
     return state8.pendingAuthSource || state8.authStatus?.selected_source || "codex";
   }
   function isDirectApiMode(authSource = currentAuthSource2()) {
@@ -29007,7 +29158,7 @@ ${hint}` : hint;
   var MIN_SYSTEM_SETTINGS_MODAL_EDGE = 30;
   var VALID_TABS = /* @__PURE__ */ new Set(["api", "codex", "language", "storage"]);
   function normalizedTab(tab) {
-    return VALID_TABS.has(tab) ? tab : "api";
+    return VALID_TABS.has(tab) ? tab : "language";
   }
   function maybeCall(name, ...args) {
     const method = getLegacyBridge().methods[name];
@@ -29114,7 +29265,7 @@ ${hint}` : hint;
     refreshSegmentedIndicators();
     if (animateHeight && panel) animateSystemSettingsPanelHeight(panel, beforeHeight);
   }
-  function openSystemSettingsModal(tab = "api") {
+  function openSystemSettingsModal(tab = "language") {
     const { els: els43 } = getLegacyBridge();
     const wasHidden = els43.systemSettingsModal?.classList.contains("hidden") ?? true;
     setSystemSettingsTab(tab);
@@ -29596,7 +29747,7 @@ ${hint}` : hint;
     state9.apiProviderDraftIsNew = false;
     populateApiSettingsForm();
     setApiSettingsFeedback("", "");
-    openSystemSettingsModal("api");
+    openSystemSettingsModal("language");
   }
   function closeApiSettingsModal() {
     closeSystemSettingsModal();
@@ -29937,7 +30088,7 @@ ${hint}` : hint;
     closePromptPopover3();
     refreshSettings();
     if (els11.settingsStatus) els11.settingsStatus.textContent = translate("settings.status");
-    openSystemSettingsModal("storage");
+    openSystemSettingsModal("language");
   }
   function closeSettingsModal() {
     closeSystemSettingsModal();
@@ -37131,6 +37282,12 @@ ${galleryText}`;
   async function runTask() {
     syncPromptFromEditor6();
     syncGalleryInputsFromPrompt3();
+    if (!isByokActive()) {
+      setStatus17("\u8BF7\u5148\u5728\u300C\u{1F511} \u81EA\u5E26Key\u300D\u4E2D\u586B\u5165 API Key", "error");
+      document.getElementById("byokPopover")?.classList.remove("hidden");
+      document.getElementById("byokApiKeyInput")?.focus();
+      return;
+    }
     const prompt = getPromptText9();
     const promptForModel = currentPromptForModel2();
     const uploads = uploadInputs3();
@@ -37181,6 +37338,7 @@ ${galleryText}`;
     } else if (currentAuthSource3() === "codex") {
       form.append("codex_mode", currentCodexMode4());
     }
+    appendByokToForm(form);
     if (els33.outputFormat.value !== "png") {
       form.append("output_compression", String(params.output_compression));
     }
@@ -41941,6 +42099,7 @@ ${galleryText}`;
 
   // codex_image/webui/frontend/src/main.ts
   initInputSourcesFeature();
+  initByokFeature();
   initImageEditorFeature();
   initImageStripFeature();
   initGalleryCategoriesFeature();
