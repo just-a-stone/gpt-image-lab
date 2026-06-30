@@ -1,38 +1,29 @@
-:root {
-  color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #101815;
-    --surface: #17221e;
-    --surface-soft: #1e2b26;
-    --border: #31443b;
-    --text: #e7f0ec;
-    --text-secondary: #b9cac2;
-    --primary: #72b79b;
-    --primary-foreground: #10201b;
-    --primary-strong: #a6d8c5;
-    --radius: 8px;
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f3f6f4;
-    --surface: #ffffff;
-    --surface-soft: #f8faf9;
-    --border: #e2e8e5;
-    --text: #1f352f;
-    --text-secondary: #4a635b;
-    --primary: #457b66;
-    --primary-foreground: #ffffff;
-    --primary-strong: #335d4d;
-    --radius: 8px;
-  }
-}
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #f3f6f4;
+  --surface: #ffffff;
+  --surface-soft: #f8faf9;
+  --border: #e2e8e5;
+  --text: #1f352f;
+  --text-secondary: #4a635b;
+  --primary: #457b66;
+  --primary-foreground: #ffffff;
+  --primary-strong: #335d4d;
+  --radius: 8px;
+}
+
+:root[data-theme="dark"] {
+  --bg: #101815;
+  --surface: #17221e;
+  --surface-soft: #1e2b26;
+  --border: #31443b;
+  --text: #e7f0ec;
+  --text-secondary: #b9cac2;
+  --primary: #72b79b;
+  --primary-foreground: #10201b;
+  --primary-strong: #a6d8c5;
+}
 
 body {
   background: var(--bg);
@@ -41,11 +32,13 @@ body {
   min-height: 100vh;
 }
 
+a { color: inherit; }
+
 .explore-header {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
@@ -68,7 +61,11 @@ body {
 
 .explore-back:hover { color: var(--text); }
 
-.explore-title { font-size: 22px; font-weight: 700; }
+.explore-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
 
 .explore-grid {
   max-width: 1400px;
@@ -86,6 +83,11 @@ body {
   overflow: hidden;
   cursor: pointer;
   transition: border-color 0.2s, transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+:root[data-theme="dark"] .explore-card {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 .explore-card:hover {
@@ -238,7 +240,7 @@ body {
   color: var(--primary);
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .explore-modal-copy:hover {
