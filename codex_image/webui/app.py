@@ -216,6 +216,8 @@ def create_app(
         else (output_path / DEFAULT_WEBUI_SOURCE_DATA_SUBDIR if custom_output else configured_paths["source_data_root"])
     )
     storage = TaskStorage(output_path, input_root=input_path, source_data_root=source_data_path)
+    from .owner import OwnerStore
+    owner_store = OwnerStore(source_data_path / "webui-task-index.db")
     _migrate_legacy_gallery_directory(gallery_path, [Path("output") / "webui-gallery"])
     gallery_storage = GalleryStorage(gallery_path)
     reference_asset_storage = ReferenceAssetStorage(reference_asset_path)
@@ -258,6 +260,7 @@ def create_app(
         reference_asset_root=reference_asset_path,
         source_data_root=source_data_path,
         auto_start_queue=auto_start_queue,
+        owner_store=owner_store,
     )
     ctx.install_on_app_state()
 

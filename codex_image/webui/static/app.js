@@ -13297,6 +13297,27 @@
     if (creds.imageModel.trim()) form.append("byok_image_model", creds.imageModel.trim());
     return true;
   }
+  async function syncSession() {
+    if (!isByokActive()) return false;
+    const creds = getByokCreds();
+    if (!creds) return false;
+    try {
+      const resp = await fetch("/api/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ api_key: creds.apiKey.trim() })
+      });
+      return resp.ok;
+    } catch {
+      return false;
+    }
+  }
+  async function clearSession() {
+    try {
+      await fetch("/api/session", { method: "DELETE" });
+    } catch {
+    }
+  }
   function refreshRunButton() {
     const bridge39 = getLegacyBridge();
     const els43 = bridge39.els;
@@ -13336,10 +13357,12 @@
       updateByokIndicator();
       refreshRunButton();
       getLegacyBridge().methods.updateRequestPreview?.();
+      void syncSession();
     };
     saveButton.addEventListener("click", persist);
     clearButton.addEventListener("click", () => {
       clearByokCreds();
+      void clearSession();
       keyInput.value = "";
       baseUrlInput.value = "";
       modelInput.value = "";
@@ -42159,6 +42182,6 @@ ${galleryText}`;
   initLightboxFeature();
   initializeQueueFeature();
   initSegmentedIndicatorFeature();
-  window.__codexImageWebUI?.boot();
+  syncSession().finally(() => window.__codexImageWebUI?.boot());
 })();
 //# sourceMappingURL=app.js.map

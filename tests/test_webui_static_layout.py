@@ -1675,7 +1675,7 @@ class WebUIStaticLayoutTests(WebUIStaticTestCase):
         indicator_source = Path("codex_image/webui/frontend/src/segmented-indicator.ts").read_text(encoding="utf-8")
 
         self.assertIn('import { initSegmentedIndicatorFeature } from "./segmented-indicator";', main_source)
-        self.assertLess(main_source.index("initSegmentedIndicatorFeature();"), main_source.index("window.__codexImageWebUI?.boot();"))
+        self.assertLess(main_source.index("initSegmentedIndicatorFeature();"), main_source.index("window.__codexImageWebUI?.boot()"))
         self.assertIn('".radio-group:not(.ratio-group)"', indicator_source)
         self.assertIn('"#authSourceGroup"', indicator_source)
         self.assertIn('"#systemSettingsTabs"', indicator_source)

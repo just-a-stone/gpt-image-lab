@@ -51,6 +51,30 @@ export function appendByokToForm(form: FormData): boolean {
   return true;
 }
 
+export async function syncSession(): Promise<boolean> {
+  if (!isByokActive()) return false;
+  const creds = getByokCreds();
+  if (!creds) return false;
+  try {
+    const resp = await fetch("/api/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ api_key: creds.apiKey.trim() }),
+    });
+    return resp.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function clearSession(): Promise<void> {
+  try {
+    await fetch("/api/session", { method: "DELETE" });
+  } catch {
+    // ignore network errors
+  }
+}
+
 function refreshRunButton(): void {
   const bridge = getLegacyBridge();
   const els = bridge.els;
@@ -94,11 +118,13 @@ function bindByokPopover(): void {
     updateByokIndicator();
     refreshRunButton();
     getLegacyBridge().methods.updateRequestPreview?.();
+    void syncSession();
   };
 
   saveButton.addEventListener("click", persist);
   clearButton.addEventListener("click", (): void => {
     clearByokCreds();
+    void clearSession();
     keyInput.value = "";
     baseUrlInput.value = "";
     modelInput.value = "";

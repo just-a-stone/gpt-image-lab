@@ -17,6 +17,9 @@ services:
       # 禁用归档/删除功能（1/true/yes/on 开启禁用，留空则允许）
       # 多用户共享部署建议设为 1，防止互相删除任务/结果
       - WEBUI_DISABLE_DELETION=1
+      # 用户身份隔离的签名密钥（多用户部署必须固定，否则重启后所有人需重新建立会话）
+      # 生产环境请用 `openssl rand -hex 32` 生成一个固定值替换
+      - WEBUI_OWNER_SECRET=CHANGE_ME_TO_A_RANDOM_64_HEX
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8787/api/health', timeout=5).status==200 else 1)"]
       interval: 30s

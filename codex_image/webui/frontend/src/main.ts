@@ -1,6 +1,6 @@
 import "../legacy-app.js";
 import { initInputSourcesFeature } from "./input-sources";
-import { initByokFeature } from "./byok";
+import { initByokFeature, syncSession } from "./byok";
 import { initImageEditorFeature } from "./image-editor";
 import { initImageStripFeature } from "./image-strip";
 import { initGalleryCategoriesFeature } from "./gallery-categories";
@@ -82,4 +82,4 @@ initAppVersionFeature();
 initLightboxFeature();
 initializeQueueFeature();
 initSegmentedIndicatorFeature();
-window.__codexImageWebUI?.boot();
+syncSession().finally(() => window.__codexImageWebUI?.boot());
