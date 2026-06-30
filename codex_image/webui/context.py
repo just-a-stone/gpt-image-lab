@@ -40,6 +40,7 @@ class WebUIContext:
     running_worker_tasks: dict[str, Any] = field(default_factory=dict)
     api_request_semaphores: dict[str, dict[str, Any]] = field(default_factory=dict)
     route_helpers: dict[str, Any] = field(default_factory=dict)
+    byok_keys: dict[str, str] = field(default_factory=dict)
 
     def install_on_app_state(self) -> None:
         self.app.state.ctx = self
@@ -63,5 +64,6 @@ class WebUIContext:
         self.app.state.running_worker_tasks = self.running_worker_tasks
         self.app.state.api_request_semaphores = self.api_request_semaphores
         self.app.state.route_helpers = self.route_helpers
+        self.app.state.byok_keys = self.byok_keys
         if self.queue_manager is not None:
             self.app.state.queue_manager = self.queue_manager

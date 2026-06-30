@@ -322,6 +322,11 @@ def _with_file_urls(
     task_id = str(metadata.get("task_id") or "")
     enriched = dict(metadata)
     params = enriched.get("params")
+    if isinstance(params, dict):
+        sanitized_params = {k: v for k, v in params.items() if k != "byok_api_key"}
+        if len(sanitized_params) != len(params):
+            enriched["params"] = sanitized_params
+        params = sanitized_params
     request_payload = enriched.get("request")
     if isinstance(params, dict) and not params.get("main_model") and isinstance(request_payload, dict) and request_payload.get("model"):
         enriched["params"] = {**params, "main_model": str(request_payload["model"])}

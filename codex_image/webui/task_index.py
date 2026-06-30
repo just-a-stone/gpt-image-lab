@@ -75,6 +75,16 @@ SUMMARY_KEYS = {
 
 TASK_INDEX_SCHEMA_VERSION = 4
 RATIO_OTHER_VALUE = "__other__"
+
+
+def _strip_byok_key(summary: Any) -> Any:
+    if isinstance(summary, dict) and isinstance(summary.get("params"), dict):
+        params = summary["params"]
+        if "byok_api_key" in params:
+            summary["params"] = {k: v for k, v in params.items() if k != "byok_api_key"}
+    return summary
+
+
 KNOWN_RATIO_ORIENTATIONS = {
     "1:1": "square",
     "4:5": "portrait",
@@ -313,7 +323,7 @@ class SQLiteTaskIndex:
         summaries: list[dict[str, Any]] = []
         for row in rows:
             try:
-                summary = json.loads(str(row["summary_json"]))
+                summary = _strip_byok_key(json.loads(str(row["summary_json"])))
             except json.JSONDecodeError:
                 continue
             if isinstance(summary, dict):

@@ -370,6 +370,7 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
             ctx.storage.delete_task(task_id)
         except (FileNotFoundError, ValueError) as exc:
             raise HTTPException(status_code=404, detail="Task not found") from exc
+        ctx.byok_keys.pop(task_id, None)
         return {"ok": True, "task_id": task_id}
 
     def _ensure_outputs_mutable(task_id: str, metadata: dict[str, Any]) -> None:

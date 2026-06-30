@@ -109,12 +109,12 @@ def _queue_channel_available(ctx: WebUIContext, channel: QueueChannel) -> bool:
     return True
 
 
-def _client_for_queue_channel(ctx: WebUIContext, channel: QueueChannel, metadata: dict[str, Any] | None = None, *, client_factory_overridden: bool = False) -> Any:
+def _client_for_queue_channel(ctx: WebUIContext, channel: QueueChannel, metadata: dict[str, Any] | None = None, *, task_id: str = "", client_factory_overridden: bool = False) -> Any:
     if client_factory_overridden:
         return ctx.client_factory()
     if channel.auth_source == "api":
         params = metadata.get("params") if isinstance(metadata, dict) and isinstance(metadata.get("params"), dict) else {}
-        byok_key = str(params.get("byok_api_key") or "").strip()
+        byok_key = str(ctx.byok_keys.get(task_id) or params.get("byok_api_key") or "").strip()
         if byok_key:
             byok_settings = {
                 "api_key": byok_key,
@@ -185,7 +185,7 @@ async def execute_task(
         metadata["attempts"] = int(metadata.get("attempts") or 0) + 1
         ctx.storage.write_metadata(task_id, metadata)
 
-        client = _client_for_queue_channel(ctx, channel, metadata, client_factory_overridden=client_factory_overridden)
+        client = _client_for_queue_channel(ctx, channel, metadata, task_id=task_id, client_factory_overridden=client_factory_overridden)
         await _execute_stored_task(
             storage=ctx.storage,
             gallery_storage=ctx.gallery_storage,
@@ -219,6 +219,7 @@ async def execute_task(
         if ctx.running_worker_tasks.get(task_id) is current_task:
             ctx.running_worker_tasks.pop(task_id, None)
         ctx.active_task_ids.discard(task_id)
+        ctx.byok_keys.pop(task_id, None)
 
 
 def _queue_max_attempts_for_channels(channels: list[QueueChannel]) -> int:

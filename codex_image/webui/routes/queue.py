@@ -84,6 +84,7 @@ def register_queue_routes(app: FastAPI, ctx: WebUIContext) -> None:
         if task_id in state["waiting"]:
             ctx.queue_storage.remove_waiting(task_id)
             ctx.storage.delete_task(task_id)
+            ctx.byok_keys.pop(task_id, None)
             return {"ok": True, "task_id": task_id, "cancelled": False}
         running_channel_id = h["running_channel_for_task"](task_id)
         if running_channel_id is None:

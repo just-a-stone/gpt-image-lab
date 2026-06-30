@@ -166,7 +166,7 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
         if auth_source == "api" and effective_api_mode == "images":
             params["api_images_concurrency"] = effective_api_images_concurrency
         if byok:
-            params["byok_api_key"] = byok["api_key"]
+            ctx.byok_keys[task.task_id] = byok["api_key"]
             if byok["base_url"]:
                 params["byok_base_url"] = byok["base_url"]
             if byok["image_model"]:
@@ -336,7 +336,7 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
         if auth_source == "api" and effective_api_mode == "images":
             params["api_images_concurrency"] = effective_api_images_concurrency
         if byok:
-            params["byok_api_key"] = byok["api_key"]
+            ctx.byok_keys[task.task_id] = byok["api_key"]
             if byok["base_url"]:
                 params["byok_base_url"] = byok["base_url"]
             if byok["image_model"]:
