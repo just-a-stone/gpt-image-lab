@@ -1,0 +1,22 @@
+services:
+  webui:
+    build: .
+    image: feiyang-lab-conjure:latest
+    container_name: feiyang-lab-conjure
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    volumes:
+      # 所有数据（输入/输出/画廊/设置 JSON/任务）都在容器的 /app/output 下
+      - ./data:/app/output
+    environment:
+      # 单次生图请求超时（秒），按上游 API 响应速度调整
+      - CODEX_IMAGE_REQUEST_TIMEOUT_SECONDS=300
+      # SSE 调试日志，生产环境留空
+      - CODEX_IMAGE_DEBUG_SSE=
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8787/api/health', timeout=5).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

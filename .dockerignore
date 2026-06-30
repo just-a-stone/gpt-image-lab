@@ -1,0 +1,26 @@
+.git
+.gitignore
+.github
+.venv
+venv
+node_modules
+output
+outputs
+data
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.pytest_cache
+.mypy_cache
+.DS_Store
+*.log
+codex_image/webui/frontend
+codex_image/webui/static/styles
+tests
+*.md
+!requirements-webui.txt
+Start WebUI*
+packaging
+assets
