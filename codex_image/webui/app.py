@@ -270,8 +270,6 @@ def create_app(
         auto_retry=auto_retry,
         client_factory_overridden=client_factory is not None,
     )
-    app.mount("/inputs", StaticFiles(directory=input_path, check_dir=False), name="inputs")
-    app.mount("/outputs", StaticFiles(directory=output_path, check_dir=False), name="outputs")
     app.mount("/static", NoCacheStaticFiles(directory=static_path, check_dir=False), name="static")
 
     @app.get("/", response_model=None)

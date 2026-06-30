@@ -38998,9 +38998,9 @@ ${galleryText}`;
     }
   }
   function outputFileUrl(filename) {
-    if (filename.startsWith("/outputs/")) return filename;
+    if (filename.startsWith("/api/outputs/")) return filename;
     const clean = filename.split("/").filter(Boolean).map(encodeURIComponent).join("/");
-    return clean ? `/outputs/${clean}` : "";
+    return clean ? `/api/outputs/${clean}` : "";
   }
   function completedOutputCount(task) {
     if (Array.isArray(task.outputs)) {
@@ -39159,7 +39159,7 @@ ${galleryText}`;
     if (!Array.isArray(task.input_files) || !task.task_id) {
       return [];
     }
-    return task.input_files.map((filename) => `/inputs/${encodeURIComponent(filename)}`);
+    return task.input_files.map((filename) => `/api/inputs/${encodeURIComponent(filename)}`);
   }
   function taskInputThumbnailRoute(task, index) {
     const inputIndex = positiveInt(index);
@@ -39174,7 +39174,7 @@ ${galleryText}`;
     return taskInputUrls(task).map((_, index) => taskInputThumbnailRoute(task, index + 1)).filter(Boolean);
   }
   function isLegacyOutputInputUrl(url) {
-    return typeof url === "string" && /^\/outputs\/[^/]+\/inputs\//.test(url);
+    return typeof url === "string" && /^\/api\/outputs\/[^/]+\/inputs\//.test(url);
   }
   function taskInputPreviewUrls2(task) {
     const thumbnailUrls = taskInputThumbnailUrls(task);
@@ -39195,7 +39195,7 @@ ${galleryText}`;
   }
   function outputFileUrl2(filename) {
     const clean = String(filename || "").split("/").filter(Boolean).map(encodeURIComponent).join("/");
-    return clean ? `/outputs/${clean}` : "";
+    return clean ? `/api/outputs/${clean}` : "";
   }
   function taskThumbnailRoute(task, index) {
     const outputIndex = positiveInt(index);

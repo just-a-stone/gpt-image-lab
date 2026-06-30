@@ -278,7 +278,7 @@ def _is_generic_invalid_request_error(error: str) -> bool:
 
 
 def _output_url(storage: TaskStorage, path: Path) -> str:
-    return f"/outputs/{quote(storage.output_file(path), safe='/')}"
+    return f"/api/outputs/{quote(storage.output_file(path), safe='/')}"
 
 
 def _output_thumbnail_fields(storage: TaskStorage, task_id: str, output_index: int, output_path: Path) -> dict[str, str]:
@@ -296,8 +296,8 @@ def _output_thumbnail_fields(storage: TaskStorage, task_id: str, output_index: i
 def _output_file_from_url(url: str) -> str:
     parsed = urlsplit(str(url))
     path = unquote(parsed.path or "")
-    if path.startswith("/outputs/"):
-        return path.removeprefix("/outputs/")
+    if path.startswith("/api/outputs/"):
+        return path.removeprefix("/api/outputs/")
     return Path(path).name
 
 

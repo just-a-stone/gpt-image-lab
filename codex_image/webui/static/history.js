@@ -13137,7 +13137,7 @@
     const url = String(task.thumbnail_url || "");
     if (!url) return "";
     const staticThumbMatch = url.match(/(?:^|\/)(\d{14}-[a-f0-9]+)-image-(\d+)-thumb\.[a-z0-9]+(?:[?#].*)?$/i);
-    if (url.includes("/outputs/thumbnails/") && staticThumbMatch && staticThumbMatch[1] === task.task_id) {
+    if (url.includes("/api/outputs/thumbnails/") && staticThumbMatch && staticThumbMatch[1] === task.task_id) {
       const outputIndex = staticThumbMatch[2] || "1";
       return versionHistoryThumbnailUrl(`/api/tasks/${encodeURIComponent(task.task_id)}/outputs/${encodeURIComponent(outputIndex)}/thumbnail`);
     }

@@ -139,7 +139,7 @@ function taskInputUrls(task: any) {
   if (!Array.isArray(task.input_files) || !task.task_id) {
     return [];
   }
-  return task.input_files.map((filename: any) => `/inputs/${encodeURIComponent(filename)}`);
+  return task.input_files.map((filename: any) => `/api/inputs/${encodeURIComponent(filename)}`);
 }
 
 function taskInputThumbnailRoute(task: any, index: any) {
@@ -157,7 +157,7 @@ function taskInputThumbnailUrls(task: any) {
 }
 
 function isLegacyOutputInputUrl(url: any) {
-  return typeof url === "string" && /^\/outputs\/[^/]+\/inputs\//.test(url);
+  return typeof url === "string" && /^\/api\/outputs\/[^/]+\/inputs\//.test(url);
 }
 
 function taskInputPreviewUrls(task: any) {
@@ -180,7 +180,7 @@ function taskInputPreviewUrls(task: any) {
 
 function outputFileUrl(filename: any) {
   const clean = String(filename || "").split("/").filter(Boolean).map(encodeURIComponent).join("/");
-  return clean ? `/outputs/${clean}` : "";
+  return clean ? `/api/outputs/${clean}` : "";
 }
 
 function taskThumbnailRoute(task: any, index: any) {

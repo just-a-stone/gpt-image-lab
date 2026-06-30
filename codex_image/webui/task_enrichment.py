@@ -10,7 +10,7 @@ from .storage import GalleryStorage, ReferenceAssetStorage
 
 
 def _input_urls(task_id: str, input_files: list[str]) -> list[str]:
-    return [f"/inputs/{quote(filename, safe='')}" for filename in input_files]
+    return [f"/api/inputs/{quote(filename, safe='')}" for filename in input_files]
 
 
 def _input_thumbnail_route_url(task_id: str, input_index: int) -> str:
@@ -24,7 +24,7 @@ def _input_thumbnail_urls(task_id: str, input_files: list[str]) -> list[str]:
 
 
 def _output_static_url(filename: str) -> str:
-    return f"/outputs/{quote(filename, safe='/')}"
+    return f"/api/outputs/{quote(filename, safe='/')}"
 
 
 def _thumbnail_route_url(task_id: str, output_index: int) -> str:
@@ -191,8 +191,8 @@ def _output_index_from_url(url: Any) -> int | None:
 def _output_file_from_url(url: Any) -> str:
     parsed = urlsplit(str(url or ""))
     path = unquote(parsed.path or "")
-    if path.startswith("/outputs/"):
-        return path.removeprefix("/outputs/")
+    if path.startswith("/api/outputs/"):
+        return path.removeprefix("/api/outputs/")
     return path.lstrip("/")
 
 

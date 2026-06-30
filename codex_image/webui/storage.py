@@ -590,12 +590,12 @@ def _first_output_thumbnail_route(metadata: dict[str, Any]) -> str:
 
 
 def _is_local_output_url(value: Any) -> bool:
-    return str(value or "").startswith("/outputs/")
+    return str(value or "").startswith("/api/outputs/")
 
 
 def _output_file_url(filename: Any) -> str:
     parts = [part for part in str(filename or "").split("/") if part]
-    return "/outputs/" + "/".join(parts) if parts else ""
+    return "/api/outputs/" + "/".join(parts) if parts else ""
 
 
 def _positive_int(value: Any) -> int | None:

@@ -479,9 +479,9 @@ function persistTaskNotificationSeenKeys(): void {
 }
 
 function outputFileUrl(filename: string): string {
-  if (filename.startsWith("/outputs/")) return filename;
+  if (filename.startsWith("/api/outputs/")) return filename;
   const clean = filename.split("/").filter(Boolean).map(encodeURIComponent).join("/");
-  return clean ? `/outputs/${clean}` : "";
+  return clean ? `/api/outputs/${clean}` : "";
 }
 
 function completedOutputCount(task: WebUITask): number {

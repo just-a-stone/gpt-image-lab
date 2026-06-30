@@ -703,7 +703,7 @@ def _first_output_thumbnail_route(task_id: str, metadata: dict[str, Any]) -> str
 
 
 def _is_local_output_url(value: Any) -> bool:
-    return str(value or "").startswith("/outputs/")
+    return str(value or "").startswith("/api/outputs/")
 
 
 def _positive_int(value: Any) -> int | None:
