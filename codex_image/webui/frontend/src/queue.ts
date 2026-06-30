@@ -5,6 +5,25 @@ import type { QueueState, RealtimePayload, WebUITask } from "./types";
 
 const REALTIME_EVENTS_URL = "/api/events?stream=1";
 const QUEUE_DISPATCH_RESYNC_DELAY_MS = 1500;
+const REALTIME_RECONNECT_BASE_DELAY_MS = 500;
+const REALTIME_RECONNECT_MAX_DELAY_MS = 10000;
+
+let realtimeReconnectTimer: number | undefined;
+let realtimeReconnectAttempts = 0;
+
+function scheduleRealtimeReconnect(): void {
+  if (realtimeReconnectTimer !== undefined) return;
+  // Keep retrying indefinitely with the delay capped at MAX, so a prolonged
+  // outage (backend restart, sleep, proxy blip) still recovers once the
+  // server is back instead of permanently freezing realtime updates.
+  realtimeReconnectAttempts = Math.min(realtimeReconnectAttempts + 1, 20);
+  const base = Math.min(REALTIME_RECONNECT_BASE_DELAY_MS * realtimeReconnectAttempts, REALTIME_RECONNECT_MAX_DELAY_MS);
+  const jitter = Math.floor(Math.random() * 250);
+  realtimeReconnectTimer = window.setTimeout(() => {
+    realtimeReconnectTimer = undefined;
+    startRealtimeUpdates();
+  }, base + jitter);
+}
 
 type QueueTask = WebUITask & {
   output_size?: string;
@@ -49,6 +68,7 @@ export function startRealtimeUpdates({ migrateLegacyArchives = false } = {}): bo
   const source = new EventSource(REALTIME_EVENTS_URL);
   state.realtimeSource = source;
   source.onmessage = (event) => {
+    realtimeReconnectAttempts = 0;
     handleRealtimeMessage(event).catch((error: unknown) => {
       console.error(error);
       getLegacyBridge().methods.setStatus(errorMessage(error, translate("queue.realtimeUpdateFailed")), "error");
@@ -62,12 +82,17 @@ export function startRealtimeUpdates({ migrateLegacyArchives = false } = {}): bo
     void refreshQueue();
     void getLegacyBridge().methods.refreshTasks({ migrateLegacyArchives: shouldMigrateArchives });
     getLegacyBridge().methods.setStatus(translate("queue.realtimeDisconnected"), "error");
+    scheduleRealtimeReconnect();
   };
   return true;
 }
 
 export function closeRealtimeUpdates(): void {
   const state = getState();
+  if (realtimeReconnectTimer !== undefined) {
+    window.clearTimeout(realtimeReconnectTimer);
+    realtimeReconnectTimer = undefined;
+  }
   if (!state.realtimeSource) return;
   state.realtimeSource.close();
   state.realtimeSource = null;

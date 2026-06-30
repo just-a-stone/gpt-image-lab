@@ -37615,6 +37615,20 @@ ${galleryText}`;
   // codex_image/webui/frontend/src/queue.ts
   var REALTIME_EVENTS_URL = "/api/events?stream=1";
   var QUEUE_DISPATCH_RESYNC_DELAY_MS = 1500;
+  var REALTIME_RECONNECT_BASE_DELAY_MS = 500;
+  var REALTIME_RECONNECT_MAX_DELAY_MS = 1e4;
+  var realtimeReconnectTimer;
+  var realtimeReconnectAttempts = 0;
+  function scheduleRealtimeReconnect() {
+    if (realtimeReconnectTimer !== void 0) return;
+    realtimeReconnectAttempts = Math.min(realtimeReconnectAttempts + 1, 20);
+    const base = Math.min(REALTIME_RECONNECT_BASE_DELAY_MS * realtimeReconnectAttempts, REALTIME_RECONNECT_MAX_DELAY_MS);
+    const jitter = Math.floor(Math.random() * 250);
+    realtimeReconnectTimer = window.setTimeout(() => {
+      realtimeReconnectTimer = void 0;
+      startRealtimeUpdates();
+    }, base + jitter);
+  }
   var queueFeatureInitialized = false;
   function initializeQueueFeature() {
     if (queueFeatureInitialized) return;
@@ -37643,6 +37657,7 @@ ${galleryText}`;
     const source = new EventSource(REALTIME_EVENTS_URL);
     state32.realtimeSource = source;
     source.onmessage = (event) => {
+      realtimeReconnectAttempts = 0;
       handleRealtimeMessage(event).catch((error) => {
         console.error(error);
         getLegacyBridge().methods.setStatus(errorMessage5(error, translate("queue.realtimeUpdateFailed")), "error");
@@ -37656,11 +37671,16 @@ ${galleryText}`;
       void refreshQueue();
       void getLegacyBridge().methods.refreshTasks({ migrateLegacyArchives: shouldMigrateArchives });
       getLegacyBridge().methods.setStatus(translate("queue.realtimeDisconnected"), "error");
+      scheduleRealtimeReconnect();
     };
     return true;
   }
   function closeRealtimeUpdates() {
     const state32 = getState();
+    if (realtimeReconnectTimer !== void 0) {
+      window.clearTimeout(realtimeReconnectTimer);
+      realtimeReconnectTimer = void 0;
+    }
     if (!state32.realtimeSource) return;
     state32.realtimeSource.close();
     state32.realtimeSource = null;

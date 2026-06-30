@@ -7,6 +7,7 @@ from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from codex_image.webui.context import WebUIContext
+from codex_image.webui.feature_flags import ensure_deletion_allowed
 from codex_image.webui.events import event_key, event_snapshot, queue_event, queue_snapshot, queued_or_running_task_ids, sse_message, task_events
 
 EVENT_STREAM_CHECK_INTERVAL_SECONDS = 1.0
@@ -43,6 +44,10 @@ def register_queue_routes(app: FastAPI, ctx: WebUIContext) -> None:
                 queue = queue_snapshot(ctx)
                 queue_key = event_key(queue)
                 if queue_key == previous_queue_key:
+                    # keepalive comment: prevents idle-timeout disconnects through
+                    # Docker proxy / reverse proxies and forces buffer flushes,
+                    # without triggering client onmessage handlers.
+                    yield ": keepalive\n\n"
                     continue
 
                 current_task_ids = queued_or_running_task_ids(queue)
@@ -74,6 +79,7 @@ def register_queue_routes(app: FastAPI, ctx: WebUIContext) -> None:
 
     @app.delete("/api/queue/{task_id}")
     async def delete_queue_task(task_id: str) -> dict[str, Any]:
+        ensure_deletion_allowed()
         state = ctx.queue_storage.read_state()
         if task_id in state["waiting"]:
             ctx.queue_storage.remove_waiting(task_id)

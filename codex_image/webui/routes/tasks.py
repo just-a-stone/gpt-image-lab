@@ -11,6 +11,7 @@ from fastapi import Body, FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, StreamingResponse
 
 from codex_image.webui.context import WebUIContext
+from codex_image.webui.feature_flags import ensure_deletion_allowed
 from codex_image.webui.storage import utc_now
 from codex_image.webui.task_metadata import (
     _accept_partial_task_successes,
@@ -254,6 +255,7 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
 
     @app.post("/api/tasks/{task_id}/outputs/delete-unselected")
     def delete_unselected_task_outputs(task_id: str) -> dict[str, Any]:
+        ensure_deletion_allowed()
         try:
             metadata = ctx.storage.read_metadata(task_id)
             _ensure_outputs_mutable(task_id, metadata)
@@ -273,6 +275,7 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
 
     @app.patch("/api/tasks/{task_id}/archive")
     def update_task_archive(task_id: str, payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
+        ensure_deletion_allowed()
         try:
             metadata = h["set_task_archived"](task_id, bool(payload.get("archived")))
             return {
@@ -359,6 +362,7 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
 
     @app.delete("/api/tasks/{task_id}")
     def delete_task(task_id: str) -> dict[str, Any]:
+        ensure_deletion_allowed()
         if task_id in ctx.active_task_ids or h["queue_has_running_task"](task_id):
             raise HTTPException(status_code=409, detail="Running task cannot be deleted")
         try:

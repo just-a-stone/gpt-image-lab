@@ -14,6 +14,9 @@ services:
       - CODEX_IMAGE_REQUEST_TIMEOUT_SECONDS=300
       # SSE 调试日志，生产环境留空
       - CODEX_IMAGE_DEBUG_SSE=
+      # 禁用归档/删除功能（1/true/yes/on 开启禁用，留空则允许）
+      # 多用户共享部署建议设为 1，防止互相删除任务/结果
+      - WEBUI_DISABLE_DELETION=1
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8787/api/health', timeout=5).status==200 else 1)"]
       interval: 30s
