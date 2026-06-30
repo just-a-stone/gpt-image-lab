@@ -1282,7 +1282,9 @@ button, input, select, textarea {
 .share-dialog-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .share-dialog-actions .primary-button {
@@ -1294,6 +1296,8 @@ button, input, select, textarea {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .share-dialog-actions .primary-button:disabled {
@@ -1309,6 +1313,9 @@ button, input, select, textarea {
   color: var(--text-secondary, #999);
   font-size: 14px;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  height: auto;
 }
 
 .task-select-button {
