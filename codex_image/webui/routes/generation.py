@@ -75,6 +75,8 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
         byok = _byok_creds(byok_api_key, byok_base_url, byok_image_model)
         if not byok and not ctx.auth_checker():
             raise HTTPException(status_code=401, detail="Codex auth is not available")
+        if byok and byok["image_model"]:
+            model = byok["image_model"]
 
         gallery_refs, gallery_data_urls = _resolve_gallery_refs(ctx.gallery_storage, gallery_image_ids or [])
         uploaded_assets = await h["save_reference_assets"](reference_images or [], owner=owner)
@@ -233,6 +235,8 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
         byok = _byok_creds(byok_api_key, byok_base_url, byok_image_model)
         if not byok and not ctx.auth_checker():
             raise HTTPException(status_code=401, detail="Codex auth is not available")
+        if byok and byok["image_model"]:
+            model = byok["image_model"]
 
         if not images and not _dedupe_preserve_order(gallery_image_ids or []) and not _dedupe_preserve_order(reference_asset_ids or []):
             raise HTTPException(status_code=400, detail="At least one image is required")
