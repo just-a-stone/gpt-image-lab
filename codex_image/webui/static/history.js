@@ -889,7 +889,25 @@
     "close.imageEditor": "Close image editor panel",
     "close.gallery": "Close gallery panel",
     "close.addGallery": "Close add to gallery panel",
-    "close.version": "Close version update panel"
+    "close.version": "Close version update panel",
+    "share.button": "Share",
+    "share.dialogTitle": "Share to Public Gallery",
+    "share.dialogDesc": "This will be publicly visible at /explore",
+    "share.showPrompt": "Show prompt",
+    "share.noteLabel": "Note (optional)",
+    "share.notePlaceholder": "Add a short description...",
+    "share.warning": "Once shared, cached copies may not be fully retractable",
+    "share.confirm": "Confirm Share",
+    "share.shared": "Shared to public gallery",
+    "share.createFailed": "Failed to share",
+    "share.revokeTitle": "Revoke Share",
+    "share.revokeMessage": "Remove this work from the public gallery?",
+    "share.revokeConfirm": "Revoke",
+    "share.revoked": "Share revoked",
+    "share.revokeFailed": "Failed to revoke share",
+    "share.onlyCompleted": "Only completed tasks can be shared",
+    "share.statusFailed": "Failed to check share status",
+    "share.exploreLink": "Explore"
   };
 
   // codex_image/webui/frontend/src/i18n/de.ts
@@ -9819,7 +9837,25 @@
     "close.imageEditor": "\u5173\u95ED\u7F16\u8F91\u8F93\u5165\u56FE\u7247\u9762\u677F",
     "close.gallery": "\u5173\u95ED\u516C\u7528\u56FE\u5E93\u9762\u677F",
     "close.addGallery": "\u5173\u95ED\u6DFB\u52A0\u5230\u56FE\u5E93\u9762\u677F",
-    "close.version": "\u5173\u95ED\u7248\u672C\u66F4\u65B0\u9762\u677F"
+    "close.version": "\u5173\u95ED\u7248\u672C\u66F4\u65B0\u9762\u677F",
+    "share.button": "\u5206\u4EAB",
+    "share.dialogTitle": "\u5206\u4EAB\u5230\u516C\u5171\u6D4F\u89C8\u9875",
+    "share.dialogDesc": "\u5373\u5C06\u516C\u5F00\u4EE5\u4E0B\u5185\u5BB9\uFF0C\u4EFB\u4F55\u4EBA\u53EF\u901A\u8FC7 /explore \u6D4F\u89C8",
+    "share.showPrompt": "\u516C\u5F00\u63D0\u793A\u8BCD",
+    "share.noteLabel": "\u5907\u6CE8\uFF08\u53EF\u9009\uFF09",
+    "share.notePlaceholder": "\u6DFB\u52A0\u7B80\u77ED\u8BF4\u660E...",
+    "share.warning": "\u516C\u5F00\u540E\u5DF2\u8BBF\u95EE\u6216\u88AB\u7F13\u5B58\u7684\u526F\u672C\u53EF\u80FD\u65E0\u6CD5\u5B8C\u5168\u64A4\u56DE",
+    "share.confirm": "\u786E\u8BA4\u5206\u4EAB",
+    "share.shared": "\u5DF2\u5206\u4EAB\u5230\u516C\u5171\u6D4F\u89C8\u9875",
+    "share.createFailed": "\u5206\u4EAB\u5931\u8D25",
+    "share.revokeTitle": "\u53D6\u6D88\u5206\u4EAB",
+    "share.revokeMessage": "\u786E\u8BA4\u53D6\u6D88\u5206\u4EAB\uFF1F\u53D6\u6D88\u540E\u516C\u5171\u6D4F\u89C8\u9875\u5C06\u4E0D\u518D\u5C55\u793A\u6B64\u4F5C\u54C1",
+    "share.revokeConfirm": "\u53D6\u6D88\u5206\u4EAB",
+    "share.revoked": "\u5DF2\u53D6\u6D88\u5206\u4EAB",
+    "share.revokeFailed": "\u53D6\u6D88\u5206\u4EAB\u5931\u8D25",
+    "share.onlyCompleted": "\u53EA\u80FD\u5206\u4EAB\u5DF2\u5B8C\u6210\u7684\u4EFB\u52A1",
+    "share.statusFailed": "\u83B7\u53D6\u5206\u4EAB\u72B6\u6001\u5931\u8D25",
+    "share.exploreLink": "\u63A2\u7D22"
   };
 
   // codex_image/webui/frontend/src/i18n/zh-hk.ts

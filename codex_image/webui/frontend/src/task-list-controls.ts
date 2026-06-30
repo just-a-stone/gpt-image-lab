@@ -213,6 +213,14 @@ function handleTaskListClick(event: any) {
     return;
   }
 
+  const shareButton = event.target.closest("[data-share-task-id]");
+  if (shareButton) {
+    event.stopPropagation();
+    const fn = getLegacyBridge().methods.openShareDialog;
+    if (typeof fn === "function") fn(shareButton, shareButton.dataset.shareTaskId);
+    return;
+  }
+
   const card = event.target.closest(".task-card[data-task-id]");
   const root = taskHistoryInteractiveRoot();
   if (!card || !root?.contains(card)) return;

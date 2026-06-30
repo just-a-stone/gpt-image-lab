@@ -292,6 +292,16 @@ def create_app(
             headers={"Cache-Control": "no-store"},
         )
 
+    @app.get("/explore", response_model=None)
+    def explore() -> Response:
+        explore_path = static_path / "explore.html"
+        if explore_path.exists():
+            return FileResponse(explore_path, headers={"Cache-Control": "no-store"})
+        return HTMLResponse(
+            "<!doctype html><title>Explore - Fei Yang Lab CONJURE</title><h1>Explore</h1>",
+            headers={"Cache-Control": "no-store"},
+        )
+
     ctx.route_helpers.update(
         {
             "ensure_queue_worker_running": queue_runtime.ensure_queue_worker_running,
