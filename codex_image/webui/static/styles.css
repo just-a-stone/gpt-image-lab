@@ -1298,6 +1298,8 @@ button, input, select, textarea {
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  width: auto;
+  height: auto;
 }
 
 .share-dialog-actions .primary-button:disabled {
