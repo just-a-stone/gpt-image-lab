@@ -1,265 +1,190 @@
-<h1 align="center">iLab GPT Conjure</h1>
+<h1 align="center">Fei Yang Lab</h1>
 
 <p align="center">
-  <sub>GPT-image-2 WebUI workbench · Codex Image / OpenAI-compatible API · Gallery, templates, history, and concurrent tasks.</sub>
+  <sub>GPT-image-2 WebUI workbench · BYOK self-service keys · Multi-user isolation · Public share gallery · Docker deployment</sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/kadevin/ilab-gpt-conjure/releases"><img alt="release" src="https://img.shields.io/github/v/release/kadevin/ilab-gpt-conjure?style=flat-square&logo=github&label=release&color=0EA5E9"></a>
-  <a href="https://github.com/kadevin/ilab-gpt-conjure/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/kadevin/ilab-gpt-conjure/actions/workflows/ci.yml/badge.svg?branch=main&event=push"></a>
-  <a href="https://github.com/kadevin/ilab-gpt-conjure/commits/main"><img alt="last commit" src="https://img.shields.io/github/last-commit/kadevin/ilab-gpt-conjure?style=flat-square&logo=github&label=last%20commit&color=10B981"></a>
-  <a href="https://github.com/kadevin/ilab-gpt-conjure/stargazers"><img alt="stars" src="https://img.shields.io/github/stars/kadevin/ilab-gpt-conjure?style=flat-square&logo=github&label=stars&color=0284C7"></a>
-  <a href="https://github.com/kadevin/ilab-gpt-conjure/network/members"><img alt="forks" src="https://img.shields.io/github/forks/kadevin/ilab-gpt-conjure?style=flat-square&logo=github&label=forks&color=0369A1"></a>
+  <a href="https://github.com/just-a-stone/gpt-image-lab/releases"><img alt="release" src="https://img.shields.io/github/v/release/just-a-stone/gpt-image-lab?style=flat-square&logo=github&label=release&color=0EA5E9"></a>
+  <a href="https://github.com/just-a-stone/gpt-image-lab/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/just-a-stone/gpt-image-lab/actions/workflows/ci.yml/badge.svg?branch=main&event=push"></a>
+  <a href="https://github.com/just-a-stone/gpt-image-lab/commits/main"><img alt="last commit" src="https://img.shields.io/github/last-commit/just-a-stone/gpt-image-lab?style=flat-square&logo=github&label=last%20commit&color=10B981"></a>
+  <a href="https://github.com/just-a-stone/gpt-image-lab/stargazers"><img alt="stars" src="https://img.shields.io/github/stars/just-a-stone/gpt-image-lab?style=flat-square&logo=github&label=stars&color=0284C7"></a>
 </p>
 
 <p align="center">
   <img alt="license AGPL-3.0-only" src="https://img.shields.io/badge/license-AGPL--3.0--only-22C55E?style=flat-square">
   <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white">
   <img alt="FastAPI WebUI" src="https://img.shields.io/badge/WebUI-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white">
-  <img alt="CLI" src="https://img.shields.io/badge/CLI-enabled-334155?style=flat-square">
-  <img alt="OpenAI-Compatible API" src="https://img.shields.io/badge/OpenAI--Compatible-API-111827?style=flat-square">
-  <img alt="Advanced OAuth mode" src="https://img.shields.io/badge/local%20OAuth-advanced%20mode-B45309?style=flat-square">
-</p>
-
-
-<p align="center">
-  English · <a href="README.md">中文</a> · <a href="RELEASES.md">Downloads / Releases</a>
+  <img alt="Docker" src="https://img.shields.io/badge/Docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white">
+  <img alt="BYOK" src="https://img.shields.io/badge/BYOK-supported-8B5CF6?style=flat-square">
+  <img alt="Multi-user" src="https://img.shields.io/badge/multi--user-isolated-F59E0B?style=flat-square">
 </p>
 
 <p align="center">
-  <img src="assets/UI_en.png" alt="iLab GPT Conjure WebUI screenshot" width="960" />
+  English · <a href="README.md">中文</a>
 </p>
+
+---
 
 ## Overview
 
-iLab GPT Conjure is an AI image generation WebUI workbench for GPT-image-2, with
-a companion CLI for local automation. It supports the default Codex Image
-channel, a Codex Responses compatibility channel, and OpenAI-compatible API
-access, and includes shared gallery references, multi-type quick chips, prompt
-templates, concurrent tasks, a paged history library, and local queue
-management.
+Fei Yang Lab is an enhanced fork of [iLab GPT Conjure](https://github.com/kadevin/ilab-gpt-conjure), an AI image generation WebUI workbench for GPT-image-2 with a companion CLI for local automation.
 
-The recommended public integration path is OpenAI-compatible API mode, using
-the Images API or Responses API shape provided by your configured provider.
+Key additions in this fork:
 
-Download portable packages from [Downloads / Releases](RELEASES.md).
+- **BYOK (Bring Your Own Key)**: Users configure their own OpenAI-compatible API key, base URL, and image model directly in the browser — no server-side preset needed.
+- **Multi-user data isolation**: Tasks, reference assets, and gallery items are isolated per user. Identity is based on a random cookie that survives restarts.
+- **Public share gallery** (`/explore`): Users can share tasks to a public browsing page with multi-image gallery, prompt copy, and infinite scroll.
+- **Docker deployment**: Built-in Dockerfile and docker-compose.yml for multi-user shared deployments.
+- **SSE heartbeat**: Keeps SSE connections alive through Docker / reverse-proxy environments.
+- **Environment variable controls**: `WEBUI_OWNER_SECRET`, `WEBUI_DISABLE_DELETION`, `CODEX_IMAGE_REQUEST_TIMEOUT_SECONDS`, and more.
 
 ## Features
 
-- GPT-image-2 text-to-image, reference-image generation, and image editing
-  workflows.
-- Codex Image, Codex Responses, and OpenAI-compatible API access, with the API
-  path recommended for public or shared use.
-- Concurrent task execution, local queue state, paged history library,
-  thumbnails, and result archive.
-- Independent `/history` page with SQLite-backed pagination, search, filters,
-  grid/list views, and lazy detail loading.
-- Optional web search for Codex Responses and API Responses image generation,
-  plus prompt and task ID search across recent and historical tasks.
-- Shared gallery references, recent reference images, color chips, prompt
-  snippet chips, and reusable prompt templates.
-- Layered input-image editor with inserted input images, multi-image
-  composition, default ratio-locked transform, Shift free transform, local
-  erasing, and real layer thumbnails.
-- System Settings language dropdown for Simplified Chinese, Traditional
-  Chinese, Japanese, Korean, English, Spanish, Portuguese, French, German,
-  Russian, Italian, and Hindi, with first-launch browser detection and a
-  browser-local language preference.
-- Centered System Settings with API Settings, Codex Channel, a discoverable
-  Language tab, and Storage & Notifications tabs.
-- API provider cards for fast selection, read-only details by default, explicit
-  editing, provider copy, delete confirmation, and multi-provider sorting.
-- Portable startup launchers stay local-only; update scripts are run manually,
-  verify SHA256, preserve `data/`, and keep replaced files under `.backup/`.
-- Advanced local OAuth mode for personal Codex workflows, with clear risk
-  warnings and no account-usage probing.
-- API provider profiles with configurable base URL, API key, image model, API
-  mode, and concurrency.
+### Inherited from upstream (fully preserved)
+
+- GPT-image-2 text-to-image, reference-image generation, and image editing workflows.
+- Codex Image, Codex Responses, and OpenAI-compatible API access.
+- Concurrent task execution, local queue state, paged history library, thumbnails, and result archive.
+- Independent `/history` page with SQLite-backed pagination, search, filters, grid/list views, and lazy detail loading.
+- Shared gallery references, recent reference images, color chips, prompt snippet chips, and reusable prompt templates.
+- Layered input-image editor with multi-image composition, ratio-locked transform, Shift free transform, and local erasing.
+- System Settings with 13 languages, first-launch browser detection, and browser-local preference.
 - CLI support for generation, image references, image edits, masks, and dry runs.
+
+### New in this fork
+
+- **BYOK self-service keys**: Frontend popover for API Key / Base URL / Image Model input, stored in browser `localStorage`, sent with form data, never persisted server-side.
+- **Multi-user isolation**: Each user gets a random `owner_id` (HMAC-signed Cookie, 30-day TTL); task index, gallery, and reference assets are owner-scoped; SSE events, image routes, and API endpoints enforce ownership checks.
+- **Public share gallery** (`/explore`):
+  - Task card "Share" button → confirmation dialog (editable share note) → generates `share_id`.
+  - Share button auto-hides for already-shared tasks.
+  - `/explore` page supports infinite scroll, multi-image gallery modal (prev/next, thumbnail strip, keyboard arrows), and one-click prompt copy.
+  - Uses independent `shared_tasks` table; `public_author_id` is HMAC-anonymized; response is an allowlist of public fields only.
+- **Docker deployment**: `Dockerfile` + `docker-compose.yml` with data volume mapping to `./data` and built-in health check.
+- **SSE heartbeat**: Sends a keep-alive comment every 15 seconds to survive Docker / Nginx proxy timeouts.
+- **BYOK image model fix**: The BYOK image model setting now actually takes effect (previously overridden by the default `gpt-image-2`).
+- **CLI migration tools**: `migrate_legacy.py` (bind ownerless tasks to a specific user), `strip_byok_keys.py` (purge historically persisted BYOK keys).
 
 ## Authentication modes
 
-### Recommended: OpenAI-compatible API
+### BYOK self-service key (new in this fork)
 
-Use this mode for stable integrations, shared workstations, team deployments, or
-anything that may become a public service. Configure the provider in the WebUI
-with a base URL, API key, model name, and API mode.
+Click the "Bring Your Own Key" button in the top-right corner, enter your OpenAI-compatible API Key, Base URL (e.g. `https://api.openai.com/v1`), and image model name (e.g. `dall-e-3`, `gpt-image-2`). Credentials are stored only in the browser's `localStorage`, sent with the form submission, held in memory during task execution, and never written to the database or logs.
+
+### OpenAI-compatible API (upstream)
+
+Configure API provider cards in System Settings (base URL, API key, model name, API mode, concurrency). Recommended for stable integrations and team use.
 
 ### Advanced local mode: Codex / ChatGPT OAuth
 
-This project can optionally reuse a local Codex / ChatGPT OAuth session to call
-internal ChatGPT backend endpoints. Codex mode defaults to the direct Image
-channel for generation and editing, and the System Settings Codex Channel tab
-can switch it to the Responses compatibility channel. This mode is provided for
-local personal workflows only.
-
-It is not an officially recommended OpenAI API integration path. The endpoint
-may change without notice, may stop working, and may be subject to account,
-product, or usage restrictions. For stable integrations, production usage,
-shared deployments, or public services, use OpenAI-compatible API mode instead.
-
-Never commit OAuth files, API keys, local inputs, generated outputs, task
-metadata, SQLite databases, or debug logs.
+Optionally reuse a local Codex / ChatGPT OAuth session to call internal ChatGPT backend endpoints. Local personal workflows only; endpoints may change without notice.
 
 ## Requirements
 
 - Python 3.11 or newer.
 - WebUI dependencies from `requirements-webui.txt`.
-- Optional frontend tooling from `package.json` when editing TypeScript or CSS.
+- Optional frontend tooling from `package.json` when editing TypeScript or CSS (esbuild + Konva).
+- Docker 20.10+ and Docker Compose V2 for containerized deployment.
 
-## Install
+## Quick start
+
+### Option 1: Docker (recommended for multi-user)
 
 ```bash
-git clone https://github.com/kadevin/ilab-gpt-conjure.git
-cd ilab-gpt-conjure
+git clone https://github.com/just-a-stone/gpt-image-lab.git
+cd gpt-image-lab
+
+# Generate identity secret (must be fixed for multi-user, otherwise all users
+# lose their sessions on restart)
+echo "WEBUI_OWNER_SECRET=$(openssl rand -hex 32)" > .env
+
+# Edit docker-compose.yml environment variables as needed
+docker compose up -d
+```
+
+Then open `http://localhost:8787/`.
+
+Data (inputs/outputs/gallery/settings/task database) is persisted in `./data/`.
+
+### Option 2: Local source run
+
+```bash
+git clone https://github.com/just-a-stone/gpt-image-lab.git
+cd gpt-image-lab
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements-webui.txt
-```
 
-## Start the WebUI
-
-macOS:
-
-```bash
-open "Start WebUI.command"
-```
-
-Windows:
-
-```text
-Start WebUI.bat
-```
-
-Manual:
-
-```bash
 .venv/bin/python -m uvicorn codex_image.webui.app:app --host 127.0.0.1 --port 8787 --no-access-log
 ```
 
-Then open:
+Then open `http://127.0.0.1:8787/`.
 
-```text
-http://127.0.0.1:8787/
-```
+### Option 3: One-click launchers
 
-## Portable packages
+macOS: double-click `Start WebUI.command`
+Windows: double-click `Start WebUI.bat`
 
-Download the current portable packages from [Downloads / Releases](RELEASES.md),
-or open [GitHub Release v0.5.4](https://github.com/kadevin/ilab-gpt-conjure/releases/tag/v0.5.4)
-directly.
+## Environment variables
 
-These packages are intended for users who want a ComfyUI-style unzip-and-run
-experience:
+| Variable | Description | Default |
+| --- | --- | --- |
+| `WEBUI_OWNER_SECRET` | HMAC signing secret for user identity cookies. **Must be fixed** in multi-user deployments, otherwise all users lose sessions on restart. Generate with `openssl rand -hex 32`. | Random (lost on restart, prints warning) |
+| `WEBUI_DISABLE_DELETION` | Set to `1`/`true`/`yes`/`on` to disable delete/archive functionality. Recommended for shared multi-user deployments. | Empty (deletion allowed) |
+| `CODEX_IMAGE_REQUEST_TIMEOUT_SECONDS` | Per-request timeout for image generation in seconds. | 300 |
+| `CODEX_IMAGE_DEBUG_SSE` | SSE debug logging. Leave empty in production. | Empty |
 
-1. Download the portable zip for your platform from the release page.
-2. Extract it into a normal user directory.
-3. Run `Start WebUI Portable.bat` on Windows, or double-click
-   `Start WebUI Portable.command` on macOS.
-4. Open `http://127.0.0.1:8787/` if the browser does not open automatically.
+## Multi-user isolation
 
-The portable package contains bundled CPython, installed WebUI dependencies,
-prebuilt static WebUI assets, frontend package metadata/build config for source
-rebuilds, the app source, license files, and a local `data/` directory for
-settings, gallery files, inputs, outputs, task databases, and logs.
+This fork implements full user-level data isolation:
 
-Portable startup launchers do not run `npm install` or rebuild frontend assets.
-Node.js is only needed if you intentionally edit TypeScript or CSS and rebuild
-the static WebUI assets from source.
+- **Identity**: A random `owner_id` (e.g. `u_a1b2c3d4e5f6...`) is generated on first visit, persisted via an HMAC-signed Cookie (30-day TTL).
+- **Recovery**: If the cookie is lost, a `key_hash` (browser-fingerprint-based recovery anchor) can re-associate existing data.
+- **Isolation scope**:
+  - Task index (`task_index` table `owner` column)
+  - Gallery items (`gallery_items` filtered by owner)
+  - Reference assets (`reference_assets` filtered by owner)
+  - SSE event stream (only current owner's task events are pushed)
+  - Image routes (`/api/outputs/`, `/api/inputs/` validate file ownership)
+- **Shared resources**: Gallery categories, prompt snippets, and prompt templates remain globally shared (templates are designed as reusable structures).
 
-To update an extracted portable package, close the WebUI server window and run
-`Update WebUI Portable.bat` on Windows or `Update WebUI Portable.command` on
-macOS. Startup launchers do not contact GitHub or update files automatically.
-The updater downloads the latest matching GitHub Release asset, prints the
-selected asset and SHA256 file before making changes, verifies its SHA256 file,
-preserves `data/`, only replaces package-managed files inside the portable
-folder, and saves replaced files under `.backup/`.
-
-Choose `macos_portable_arm64` for Apple Silicon Macs and
-`macos_portable_x64` for Intel Macs.
-
-The macOS packages are unsigned portable zips, not signed `.app` bundles or
-notarized DMGs, and they do not require an Apple Developer account to build.
-The launcher tries to remove quarantine attributes from its own extracted folder
-before starting the bundled Python framework. If macOS still blocks the launcher
-after download, right-click or Control-click `Start WebUI Portable.command`,
-choose Open, then confirm Open again in the macOS security prompt. You can also
-remove quarantine from the extracted folder:
+### CLI migration tools
 
 ```bash
-xattr -dr com.apple.quarantine /path/to/ilab-gpt-conjure_macos_portable_arm64
-# or:
-xattr -dr com.apple.quarantine /path/to/ilab-gpt-conjure_macos_portable_x64
+# Bind ownerless tasks (empty owner) to a specific user
+.venv/bin/python -m codex_image.webui.migrate_legacy --owner u_xxxx --db output/webui-outputs/source-data/webui-task-index.db
+
+# Purge BYOK API keys persisted in historical task params (older versions may have stored them)
+.venv/bin/python -m codex_image.webui.strip_byok_keys --db output/webui-outputs/source-data/webui-task-index.db
 ```
 
-Do not commit portable package contents back to Git. API keys, OAuth files,
-local inputs, generated outputs, SQLite databases, and logs must stay local.
+## Public share gallery
 
-Release packaging is intentionally separate from CI: the `Portable Release`
-workflow runs only after the `CI` workflow has completed successfully on a push
-to `main`, then uploads the zip and SHA256 file as workflow artifacts. If the
-commit is tagged with a `v*` tag, the same assets are uploaded to that GitHub
-Release. For a tagged commit that already passed CI, the same workflow can also
-be run manually with `ref` and `release_tag`.
+Visit `/explore` to browse all publicly shared tasks.
+
+- **Share**: Click the "Share" button on a task card → confirmation dialog → task appears in the public gallery.
+- **Unshare**: Click "Unshare" on an already-shared task.
+- **Browse**: The `/explore` page supports infinite scroll, multi-image gallery modal (arrow keys to navigate), and one-click prompt copy.
+- **Security**: Sharing uses an independent `share_id` (not the raw task_id); responses contain only allowlisted public fields; `public_author_id` is HMAC-anonymized; shared images have a 5-minute cache (unsharing takes effect within 5 minutes).
 
 ## WebUI usage
 
-1. Choose an authentication source from the top bar. `Codex` uses the default
-   Image channel when local OAuth is available, and `API` is the recommended
-   OpenAI-compatible mode for stable or shared use.
-2. Open System Settings to manage API provider cards, Codex Image/Responses
-   mode, interface language, storage paths, and notification preferences.
-3. Add reference images by upload, drag-and-drop, paste, recent uploads, or the
-   public gallery.
-4. Write the prompt directly, insert gallery/color/snippet chips when useful,
-   and choose the prompt mode: original, fidelity, or creative.
-5. Set image count, size, orientation, quality, output format, and compression.
-   Selected aspect ratios are also appended to the model prompt as an explicit
-   instruction, for example `将宽高比设为 16:9`, so Responses-channel or API
-   proxies that ignore size parameters can still receive the intended ratio.
-6. Start generation, track running and queued tasks in the left task list, then
-   review, select, retry, download, or archive results from the preview area.
-
-## Public gallery
-
-The public gallery is a local reusable reference library for people, characters,
-products, brand assets, style references, and any image you want to reuse.
-
-- Save uploaded images, recent uploads, or generated results into the gallery.
-- Manage images in the right-side gallery drawer with categories, names, prompt
-  roles, reference notes, replacement images, deletion, and drag sorting.
-- Insert a gallery image into the current task from the gallery drawer or by
-  typing `@` in the prompt editor.
-- Gallery files stay local. Do not commit `input/`, `inputs/`, `output/`, or
-  `outputs/`. If a gallery item is later deleted, older tasks may show a missing
-  reference.
+1. **Authentication**: Select an auth source at the top (BYOK / Codex / API), or click "Bring Your Own Key" to configure BYOK.
+2. **API settings**: Open System Settings to manage API provider cards, Codex channel, interface language, storage paths, and notification preferences.
+3. **Reference images**: Upload, drag-and-drop, paste, use recent uploads, or pick from the public gallery.
+4. **Prompt**: Type directly or insert `@` gallery chips, `#` color chips, `~` snippet chips.
+5. **Parameters**: Set count, size, orientation, quality, output format, and compression.
+6. **Generate**: Start generation, track progress in the left task list, review/select/retry/download/archive results in the preview area.
+7. **History**: Full history is searchable and filterable at `/history`.
+8. **Share**: Click the "Share" button on a task card to publish to the `/explore` public gallery.
 
 ## Prompt chips
 
 The prompt editor supports three atomic chip types:
 
-- `@` gallery chip: searches the public gallery, inserts the selected image into
-  reference inputs, and adds visible reference notes for the model.
-- `#` color chip: inserts a hexadecimal color value such as `#FF6600`; useful
-  for product, poster, brand, material, or background color constraints.
-- `~` snippet chip: inserts a saved prompt snippet by short tag. The editor keeps
-  the short tag visible, while the model prompt expands it to the full snippet
-  content.
-
-Snippet chips can be created from selected prompt text and can later be viewed,
-expanded into plain text, edited, or reused with `~`, `～`, or common tilde
-variants.
-
-## Prompt templates
-
-Prompt templates are for longer reusable prompt structures, not short inline
-phrases. They are stored locally in `output/webui-prompt-templates.json`.
-
-Use `Manage Prompt Templates` in the prompt area to search, filter by category,
-favorite, create, edit, copy, insert, replace, import, or export templates.
-Templates can use small thumbnails from historical results as visual cues.
-
-Inserting a template writes into the visible prompt editor. Replacing a template
-overwrites the visible prompt text. Templates are not injected as hidden prompts.
+- `@` gallery chip: searches the public gallery and inserts the selected image into reference inputs.
+- `#` color chip: inserts a hexadecimal color value (e.g. `#FF6600`).
+- `~` snippet chip: inserts a saved prompt snippet by short tag; the editor shows the tag, the model receives the full expanded text.
 
 ## CLI
 
@@ -272,46 +197,45 @@ Use `--help` for all CLI options.
 ## Development
 
 ```bash
-.venv/bin/python -m unittest discover -s tests -v
+# Run tests
+PYTHONPATH=. .venv/bin/python -m pytest tests/ -v
+
+# Frontend checks
 npm run check:webui
 ```
 
-When changing frontend TypeScript or CSS, run `npm install` first. This installs
-the frontend build dependencies pinned by `package-lock.json`, including Konva
-for the layered input-image editor. Commit the generated browser assets in
-`codex_image/webui/static/`.
+When changing frontend TypeScript or CSS, run `npm install` first, then commit the generated browser assets in `codex_image/webui/static/`.
 
-GitHub CI runs the Python test suite and WebUI frontend checks on pull requests
-and pushes to `main`. Release packaging should run only after CI succeeds.
+Editing `explore.js` / `explore.css` / `explore.html` requires no build step (static-served).
+
+### Project structure (new files in this fork)
+
+```
+codex_image/webui/
+├── owner.py              # User identity core: HMAC Cookie, OwnerStore
+├── share_store.py        # shared_tasks table CRUD + cursor pagination
+├── feature_flags.py      # Environment variable feature flags
+├── migrate_legacy.py     # CLI: migrate ownerless tasks
+├── strip_byok_keys.py    # CLI: purge persisted BYOK keys
+├── routes/
+│   ├── share.py          # Share CRUD + public gallery API
+│   ├── assets.py         # Ownership-checked image routes
+│   └── session.py        # Session/identity routes
+├── frontend/src/
+│   ├── byok.ts           # BYOK frontend UI
+│   └── share-dialog.ts   # Share confirmation dialog
+└── static/
+    ├── explore.html      # Public gallery page
+    ├── explore.css       # Gallery styles
+    └── explore.js        # Gallery interaction (infinite scroll, multi-image modal)
+```
+
+## Relationship to upstream
+
+This project is forked from [kadevin/ilab-gpt-conjure](https://github.com/kadevin/ilab-gpt-conjure) and continues development under the same AGPL-3.0 license. Upstream's portable packages, release packaging workflows, and WeChat contact information do not apply to this fork.
 
 ## License
 
 This project is licensed under GNU AGPLv3. See `LICENSE`.
 
-If you modify this software and make it available to users over a network, you
-must also make the corresponding source code available under the same license.
-
-This license applies to the software code. It does not grant rights to the
-project name, logo, personal assets, API credentials, user prompts, input
-images, output images, or model/API services used with the software.
-
-## Contact And Custom Work
-
-Feel free to connect on WeChat to discuss AI programming, AI image generation,
-and local image generation workflows.
-
-I also take selected custom development work:
-
-- Local software tools: internal workbenches, batch automation, data dashboards,
-  and AI-assisted production workflows.
-- Business websites: company sites, product showcases, landing pages, and
-  lightweight admin systems.
-- Agent-powered websites: customer support, knowledge-base Q&A, content
-  generation, and workflow assistant web apps.
-
-Scan the QR code and mention `iLab GPT Conjure` or `custom development` so I can
-understand the context quickly.
-
-<p align="center">
-  <img src="assets/wechat-qr.jpg" alt="iLab WeChat QR Code" width="240" />
-</p>
+If you modify this software and make it available to users over a network, you must also make the corresponding source code available under the same license.
