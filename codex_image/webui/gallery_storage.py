@@ -117,10 +117,11 @@ class GalleryStorage:
         content_type: str | None = None,
         prompt_note: str | None = None,
         order: int | None = None,
+        owner: str = "",
     ) -> dict[str, Any]:
         clean_name = _clean_gallery_name(name)
         clean_category = self._clean_category(category)
-        self._ensure_unique_name(clean_name)
+        self._ensure_unique_name(clean_name, owner=owner)
         item_id = datetime.now(UTC).strftime("%Y%m%d%H%M%S") + "-" + uuid.uuid4().hex[:8]
         item_path = self._item_path(item_id)
         item_path.mkdir(parents=True, exist_ok=False)
@@ -136,14 +137,15 @@ class GalleryStorage:
             "filename": safe_name,
             "mime_type": content_type or _guess_mime_type(safe_name),
             "prompt_note": _clean_gallery_prompt_note(prompt_note),
-            "order": _clean_gallery_item_order(order, fallback=self._next_item_order(clean_category)),
+            "order": _clean_gallery_item_order(order, fallback=self._next_item_order(clean_category, owner=owner)),
             "created_at": now,
             "updated_at": now,
+            "owner": owner,
         }
         self._write_item_metadata(item_id, metadata)
         return self._normalize_item_metadata(metadata)
 
-    def list_items(self, category: str | None = None) -> list[dict[str, Any]]:
+    def list_items(self, category: str | None = None, *, owner: str | None = None) -> list[dict[str, Any]]:
         if not self.root.exists():
             return []
         clean_category = self._clean_category(category) if category else None
@@ -156,6 +158,8 @@ class GalleryStorage:
                 continue
             metadata = self._normalize_item_metadata(metadata, category_map=category_map)
             if clean_category and metadata.get("category") != clean_category:
+                continue
+            if owner is not None and str(metadata.get("owner") or "") != owner:
                 continue
             items.append(metadata)
         items.sort(key=lambda item: str(item.get("name", "")))
@@ -268,9 +272,9 @@ class GalleryStorage:
         path.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
         return path
 
-    def _ensure_unique_name(self, name: str, *, ignore_id: str | None = None) -> None:
+    def _ensure_unique_name(self, name: str, *, ignore_id: str | None = None, owner: str | None = None) -> None:
         name_key = _gallery_name_key(name)
-        for item in self.list_items():
+        for item in self.list_items(owner=owner):
             if ignore_id and item.get("id") == ignore_id:
                 continue
             if item.get("name_key") == name_key:
@@ -320,13 +324,13 @@ class GalleryStorage:
             if category_id not in existing:
                 return category_id
 
-    def _next_item_order(self, category: str) -> int:
-        items = self._ensure_category_item_orders(category)
+    def _next_item_order(self, category: str, *, owner: str | None = None) -> int:
+        items = self._ensure_category_item_orders(category, owner=owner)
         current = [int(item.get("order") or 0) for item in items if int(item.get("order") or 0) > 0]
         return (max(current) if current else 0) + 10
 
-    def _ensure_category_item_orders(self, category: str) -> list[dict[str, Any]]:
-        items = self.list_items(category=category)
+    def _ensure_category_item_orders(self, category: str, *, owner: str | None = None) -> list[dict[str, Any]]:
+        items = self.list_items(category=category, owner=owner)
         if not any(int(item.get("order") or 0) <= 0 for item in items):
             return items
         category_map = {item["id"]: item for item in self.list_categories()}
@@ -340,8 +344,8 @@ class GalleryStorage:
             normalized.append(self._normalize_item_metadata(metadata, category_map=category_map))
         return normalized
 
-    def _compact_category_item_orders(self, category: str) -> list[dict[str, Any]]:
-        items = self.list_items(category=category)
+    def _compact_category_item_orders(self, category: str, *, owner: str | None = None) -> list[dict[str, Any]]:
+        items = self.list_items(category=category, owner=owner)
         category_map = {item["id"]: item for item in self.list_categories()}
         normalized: list[dict[str, Any]] = []
         for index, item in enumerate(items, start=1):

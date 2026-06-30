@@ -3,10 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 
 from codex_image.client import DEFAULT_MAIN_MODEL, image_model_supports_input_fidelity
 from codex_image.webui.context import WebUIContext
+from codex_image.webui.owner import resolve_owner
 from codex_image.webui.executor import (
     _file_to_data_url,
     _instructions_for_transport,
@@ -43,6 +44,7 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
 
     @app.post("/api/generate")
     async def generate(
+        request: Request,
         prompt: str = Form(...),
         main_model: str = Form(DEFAULT_MAIN_MODEL),
         model: str = Form("gpt-image-2"),
@@ -69,12 +71,13 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
         reference_asset_ids: list[str] | None = Form(None),
         reference_images: list[UploadFile] | None = File(None),
     ) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
         byok = _byok_creds(byok_api_key, byok_base_url, byok_image_model)
         if not byok and not ctx.auth_checker():
             raise HTTPException(status_code=401, detail="Codex auth is not available")
 
         gallery_refs, gallery_data_urls = _resolve_gallery_refs(ctx.gallery_storage, gallery_image_ids or [])
-        uploaded_assets = await h["save_reference_assets"](reference_images or [])
+        uploaded_assets = await h["save_reference_assets"](reference_images or [], owner=owner)
         selected_assets, _ = _resolve_reference_assets(ctx.reference_asset_storage, reference_asset_ids or [])
         reference_assets = h["dedupe_reference_assets"](uploaded_assets + selected_assets)
         task = ctx.storage.create_task("generate")
@@ -186,6 +189,7 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
             prompt_constraints=prompt_constraints,
             requested_backend=requested_backend,
             max_attempts=ctx.queue_manager.max_attempts if ctx.queue_manager is not None else 1,
+            owner=owner,
         )
         ctx.queue_storage.enqueue(task.task_id)
         h["ensure_queue_worker_running"]()
@@ -196,6 +200,7 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
 
     @app.post("/api/edit")
     async def edit(
+        request: Request,
         prompt: str = Form(...),
         main_model: str = Form(DEFAULT_MAIN_MODEL),
         model: str = Form("gpt-image-2"),
@@ -224,6 +229,7 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
         images: list[UploadFile] | None = File(None),
         mask: UploadFile | None = File(None),
     ) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
         byok = _byok_creds(byok_api_key, byok_base_url, byok_image_model)
         if not byok and not ctx.auth_checker():
             raise HTTPException(status_code=401, detail="Codex auth is not available")
@@ -231,7 +237,7 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
         if not images and not _dedupe_preserve_order(gallery_image_ids or []) and not _dedupe_preserve_order(reference_asset_ids or []):
             raise HTTPException(status_code=400, detail="At least one image is required")
         gallery_refs, gallery_data_urls = _resolve_gallery_refs(ctx.gallery_storage, gallery_image_ids or [])
-        uploaded_assets = await h["save_reference_assets"](images or [])
+        uploaded_assets = await h["save_reference_assets"](images or [], owner=owner)
         selected_assets, _ = _resolve_reference_assets(ctx.reference_asset_storage, reference_asset_ids or [])
         reference_assets = h["dedupe_reference_assets"](uploaded_assets + selected_assets)
         task = ctx.storage.create_task("edit")
@@ -356,6 +362,7 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
             prompt_constraints=prompt_constraints,
             requested_backend=requested_backend,
             max_attempts=ctx.queue_manager.max_attempts if ctx.queue_manager is not None else 1,
+            owner=owner,
         )
         ctx.queue_storage.enqueue(task.task_id)
         h["ensure_queue_worker_running"]()

@@ -31,8 +31,10 @@ class ReferenceAssetStorage:
         filename: str,
         data: bytes,
         content_type: str | None = None,
+        owner: str = "",
     ) -> dict[str, Any]:
-        asset_id = hashlib.sha256(data).hexdigest()
+        owner_bytes = (owner or "").encode("utf-8")
+        asset_id = hashlib.sha256(owner_bytes + b"\x00" + data).hexdigest()
         with self._lock:
             existing = self._read_valid_item(asset_id)
             if existing is not None:
@@ -55,6 +57,7 @@ class ReferenceAssetStorage:
                 "created_at": now,
                 "last_used_at": now,
                 "used_count": 1,
+                "owner": owner or "",
             }
             shard_path.mkdir(parents=True, exist_ok=True)
             image_path.write_bytes(data)
@@ -68,7 +71,7 @@ class ReferenceAssetStorage:
             self._prune_to_limit()
             return touched
 
-    def list_recent(self, limit: int = 20) -> list[dict[str, Any]]:
+    def list_recent(self, limit: int = 20, *, owner: str | None = None) -> list[dict[str, Any]]:
         if not self.root.exists():
             return []
         items: list[dict[str, Any]] = []
@@ -87,6 +90,8 @@ class ReferenceAssetStorage:
             if metadata.get("sha256") != asset_id:
                 continue
             if self._stored_image_path(asset_id, metadata) is None:
+                continue
+            if owner is not None and str(metadata.get("owner") or "") != owner:
                 continue
             items.append(metadata)
         return sorted(items, key=lambda item: str(item.get("last_used_at", "")), reverse=True)[: max(0, limit)]

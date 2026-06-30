@@ -317,7 +317,7 @@ def create_app(
                 storage, task_id, metadata, api_settings, api_provider_id
             ),
             "save_uploads": lambda task_id, files, kind="input": _save_uploads(storage, task_id, files, kind=kind),
-            "save_reference_assets": lambda files: _save_reference_assets(reference_asset_storage, files),
+            "save_reference_assets": lambda files, owner="": _save_reference_assets(reference_asset_storage, files, owner=owner),
             "dedupe_reference_assets": _dedupe_reference_assets,
             "build_image_request_payload": lambda **kwargs: _build_image_request_payload(**kwargs),
             "slim_request_payload": lambda request_payload, **kwargs: _slim_request_payload(request_payload, **kwargs),
@@ -468,7 +468,7 @@ async def _save_uploads(storage: TaskStorage, task_id: str, files: list[UploadFi
     return saved
 
 
-async def _save_reference_assets(storage: ReferenceAssetStorage, files: list[UploadFile]) -> list[dict[str, Any]]:
+async def _save_reference_assets(storage: ReferenceAssetStorage, files: list[UploadFile], owner: str = "") -> list[dict[str, Any]]:
     assets: list[dict[str, Any]] = []
     seen: set[str] = set()
     for upload in files:
@@ -480,7 +480,7 @@ async def _save_reference_assets(storage: ReferenceAssetStorage, files: list[Upl
             raise HTTPException(status_code=400, detail=f"Unsupported image type: {upload.content_type}")
         if mime_type is None:
             raise HTTPException(status_code=400, detail=f"Unsupported image type: {upload.content_type or 'application/octet-stream'}")
-        item = storage.create_or_touch(upload.filename or "image.png", data, mime_type)
+        item = storage.create_or_touch(upload.filename or "image.png", data, mime_type, owner=owner)
         if item["id"] in seen:
             continue
         seen.add(item["id"])

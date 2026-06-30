@@ -148,32 +148,37 @@ class TaskStorage:
         for path in source_data_dirs:
             self._prune_empty_source_data_dir(path)
 
-    def list_tasks(self) -> list[dict[str, Any]]:
-        indexed_tasks = self.task_index.list_summaries()
+    def list_tasks(self, *, owner: str | None = None) -> list[dict[str, Any]]:
+        indexed_tasks = self.task_index.list_summaries(owner=owner)
         if indexed_tasks:
             return indexed_tasks
+        if owner is not None:
+            return []
         if not self.source_data_root.exists():
             return []
         return self.rebuild_task_index()
 
-    def list_recent_tasks(self, limit: int = 200) -> list[dict[str, Any]]:
-        indexed_tasks = self.task_index.list_summaries(limit=limit)
+    def list_recent_tasks(self, limit: int = 200, *, owner: str | None = None) -> list[dict[str, Any]]:
+        indexed_tasks = self.task_index.list_summaries(limit=limit, owner=owner)
         if indexed_tasks:
             return indexed_tasks
+        if owner is not None:
+            return []
         return self.rebuild_task_index()[: max(0, limit)]
 
-    def list_recent_task_cards(self, limit: int = 200) -> list[dict[str, Any]]:
-        indexed_tasks = self.task_index.list_summaries(limit=limit)
+    def list_recent_task_cards(self, limit: int = 200, *, owner: str | None = None) -> list[dict[str, Any]]:
+        indexed_tasks = self.task_index.list_summaries(limit=limit, owner=owner)
         if not indexed_tasks:
-            indexed_tasks = self.rebuild_task_index()[: max(0, limit)]
+            if owner is None:
+                indexed_tasks = self.rebuild_task_index()[: max(0, limit)]
         return [_sidebar_task_card(task) for task in indexed_tasks]
 
     def task_sidebar_card(self, task_id: str) -> dict[str, Any]:
         return _sidebar_task_card(self.read_metadata(task_id))
 
-    def task_history_summary(self) -> dict[str, Any]:
+    def task_history_summary(self, *, owner: str | None = None) -> dict[str, Any]:
         self.refresh_stale_task_index()
-        return self.task_index.history_summary()
+        return self.task_index.history_summary(owner=owner)
 
     def query_task_history(
         self,
@@ -193,6 +198,7 @@ class TaskStorage:
         archived: bool | None = None,
         sort: str = "newest",
         direction: str = "next",
+        owner: str | None = None,
     ) -> dict[str, Any]:
         self.refresh_stale_task_index()
         return self.task_index.query_history(
@@ -211,6 +217,7 @@ class TaskStorage:
             archived=archived,
             sort=sort,
             direction=direction,
+            owner=owner,
         )
 
     def refresh_stale_task_index(self, *, limit: int = 500) -> int:

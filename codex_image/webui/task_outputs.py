@@ -663,6 +663,7 @@ def _write_queued_metadata(
     prompt_constraints: list[str] | None = None,
     requested_backend: str | None = None,
     max_attempts: int = 2,
+    owner: str = "",
 ) -> dict[str, Any]:
     metadata = {
         "task_id": task_id,
@@ -684,6 +685,7 @@ def _write_queued_metadata(
         "attempts": 0,
         "max_attempts": max_attempts,
         "last_error": "",
+        "owner": owner,
     }
     if requested_backend:
         metadata["requested_backend"] = requested_backend

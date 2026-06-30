@@ -71,6 +71,7 @@ SUMMARY_KEYS = {
     "requested_backend",
     "backend",
     "assigned_auth_source",
+    "owner",
 }
 
 TASK_INDEX_SCHEMA_VERSION = 4
@@ -154,12 +155,14 @@ class SQLiteTaskIndex:
             "prompt_preview": "text not null default ''",
             "search_text": "text not null default ''",
             "schema_version": "integer not null default 0",
+            "owner": "text not null default ''",
         }
         for name, definition in columns.items():
             if name not in existing:
                 connection.execute(f"alter table task_index add column {name} {definition}")
 
     def _ensure_structured_indexes(self, connection: sqlite3.Connection) -> None:
+        connection.execute("create index if not exists idx_task_index_owner_created on task_index(owner, created_at desc, task_id desc)")
         connection.execute("create index if not exists idx_task_index_month_created on task_index(month_key, created_at desc, task_id desc)")
         connection.execute("create index if not exists idx_task_index_status on task_index(status)")
         connection.execute("create index if not exists idx_task_index_archived on task_index(archived_at)")
@@ -241,6 +244,7 @@ class SQLiteTaskIndex:
         updated_at = str(metadata.get("updated_at") or "")
         status = str(metadata.get("status") or "")
         prompt = str(metadata.get("prompt") or "")
+        owner = str(metadata.get("owner") or "")
         with closing(self._connect()) as connection:
             with connection:
                 connection.execute(
@@ -249,9 +253,9 @@ class SQLiteTaskIndex:
                         task_id, created_at, updated_at, status, prompt, summary_json,
                         completed_at, month_key, mode, size, quality, prompt_mode, ratio, orientation, backend, provider,
                         archived_at, generated_count, failed_count, total_count, thumbnail_url,
-                        prompt_preview, search_text, schema_version
+                        prompt_preview, search_text, schema_version, owner
                     )
-                    values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     on conflict(task_id) do update set
                         created_at = excluded.created_at,
                         updated_at = excluded.updated_at,
@@ -275,7 +279,8 @@ class SQLiteTaskIndex:
                         thumbnail_url = excluded.thumbnail_url,
                         prompt_preview = excluded.prompt_preview,
                         search_text = excluded.search_text,
-                        schema_version = excluded.schema_version
+                        schema_version = excluded.schema_version,
+                        owner = case when task_index.owner = '' then excluded.owner else task_index.owner end
                     """,
                     (
                         task_id,
@@ -302,6 +307,7 @@ class SQLiteTaskIndex:
                         fields["prompt_preview"],
                         fields["search_text"],
                         TASK_INDEX_SCHEMA_VERSION,
+                        owner,
                     ),
                 )
                 self._upsert_fts_row(connection, task_id, fields["search_text"])
@@ -312,14 +318,18 @@ class SQLiteTaskIndex:
                 connection.execute("delete from task_index where task_id = ?", (task_id,))
                 self._delete_fts_row(connection, task_id)
 
-    def list_summaries(self, *, limit: int | None = None) -> list[dict[str, Any]]:
+    def list_summaries(self, *, limit: int | None = None, owner: str | None = None) -> list[dict[str, Any]]:
         with closing(self._connect()) as connection:
-            sql = "select summary_json from task_index order by created_at desc, task_id desc"
-            params: tuple[Any, ...] = ()
+            sql = "select summary_json from task_index"
+            params: list[Any] = []
+            if owner is not None:
+                sql += " where owner = ?"
+                params.append(owner)
+            sql += " order by created_at desc, task_id desc"
             if limit is not None:
                 sql += " limit ?"
-                params = (max(0, int(limit)),)
-            rows = connection.execute(sql, params).fetchall()
+                params.append(max(0, int(limit)))
+            rows = connection.execute(sql, tuple(params)).fetchall()
         summaries: list[dict[str, Any]] = []
         for row in rows:
             try:
@@ -363,12 +373,16 @@ class SQLiteTaskIndex:
         archived: bool | None = None,
         sort: str = "newest",
         direction: str = "next",
+        owner: str | None = None,
     ) -> dict[str, Any]:
         safe_limit = min(100, max(1, int(limit or 50)))
         sort_order = "oldest" if sort == "oldest" else "newest"
         page_direction = "previous" if direction == "previous" else "next"
         where: list[str] = []
         params: list[Any] = []
+        if owner is not None:
+            where.append("owner = ?")
+            params.append(owner)
         if month:
             where.append("month_key = ?")
             params.append(month)
@@ -473,19 +487,25 @@ class SQLiteTaskIndex:
         with closing(self._connect()) as connection:
             return connection.execute(sql, tuple(params)).fetchall()
 
-    def history_summary(self) -> dict[str, Any]:
+    def history_summary(self, *, owner: str | None = None) -> dict[str, Any]:
+        owner_where = "owner = ?" if owner is not None else ""
+        owner_params: list[Any] = [owner] if owner is not None else []
         with closing(self._connect()) as connection:
-            total = int(connection.execute("select count(*) from task_index").fetchone()[0])
-            archived_total = int(connection.execute("select count(*) from task_index where archived_at != ''").fetchone()[0])
-            months = _count_rows(connection, "month_key", "month_key != ''", order_by="month_key desc")
-            statuses = _count_rows(connection, "status", "status != ''")
-            prompt_modes = _count_rows(connection, "prompt_mode", "prompt_mode != ''")
-            sizes = _count_rows(connection, "size", "size != ''")
-            qualities = _count_rows(connection, "quality", "quality != ''")
-            ratios = _ratio_count_rows(connection)
-            orientations = _count_rows(connection, "orientation", "orientation != ''")
-            backends = _count_rows(connection, "backend", "backend != ''")
-            providers = _count_rows(connection, "provider", "provider != ''")
+            if owner is not None:
+                total = int(connection.execute("select count(*) from task_index where owner = ?", (owner,)).fetchone()[0])
+                archived_total = int(connection.execute("select count(*) from task_index where archived_at != '' and owner = ?", (owner,)).fetchone()[0])
+            else:
+                total = int(connection.execute("select count(*) from task_index").fetchone()[0])
+                archived_total = int(connection.execute("select count(*) from task_index where archived_at != ''").fetchone()[0])
+            months = _count_rows(connection, "month_key", "month_key != ''", order_by="month_key desc", extra_where=owner_where, extra_params=owner_params)
+            statuses = _count_rows(connection, "status", "status != ''", extra_where=owner_where, extra_params=owner_params)
+            prompt_modes = _count_rows(connection, "prompt_mode", "prompt_mode != ''", extra_where=owner_where, extra_params=owner_params)
+            sizes = _count_rows(connection, "size", "size != ''", extra_where=owner_where, extra_params=owner_params)
+            qualities = _count_rows(connection, "quality", "quality != ''", extra_where=owner_where, extra_params=owner_params)
+            ratios = _ratio_count_rows(connection, extra_where=owner_where, extra_params=owner_params)
+            orientations = _count_rows(connection, "orientation", "orientation != ''", extra_where=owner_where, extra_params=owner_params)
+            backends = _count_rows(connection, "backend", "backend != ''", extra_where=owner_where, extra_params=owner_params)
+            providers = _count_rows(connection, "provider", "provider != ''", extra_where=owner_where, extra_params=owner_params)
         return {
             "total": total,
             "archived_total": archived_total,
@@ -775,16 +795,30 @@ def _history_row_response(row: sqlite3.Row) -> dict[str, Any]:
     }
 
 
-def _count_rows(connection: sqlite3.Connection, column: str, where: str, *, order_by: str = "count(*) desc, value") -> list[dict[str, Any]]:
+def _count_rows(connection: sqlite3.Connection, column: str, where: str, *, order_by: str = "count(*) desc, value", extra_where: str = "", extra_params: list[Any] | None = None) -> list[dict[str, Any]]:
+    clause = where
+    params: list[Any] = list(extra_params or [])
+    if extra_where:
+        clause = f"({where}) and ({extra_where})"
     rows = connection.execute(
-        f"select {column} as value, count(*) as count from task_index where {where} group by {column} order by {order_by}"
+        f"select {column} as value, count(*) as count from task_index where {clause} group by {column} order by {order_by}", tuple(params)
     ).fetchall()
     return [{"value": str(row["value"]), "count": int(row["count"])} for row in rows]
 
 
-def _ratio_count_rows(connection: sqlite3.Connection) -> list[dict[str, Any]]:
-    rows = _count_rows(connection, "ratio", "ratio != ''")
-    other_count = int(connection.execute("select count(*) from task_index where ratio = ''").fetchone()[0])
+def _ratio_count_rows(connection: sqlite3.Connection, *, extra_where: str = "", extra_params: list[Any] | None = None) -> list[dict[str, Any]]:
+    params: list[Any] = list(extra_params or [])
+    clause = "ratio != ''"
+    if extra_where:
+        clause = f"({clause}) and ({extra_where})"
+    rows = connection.execute(
+        f"select ratio as value, count(*) as count from task_index where {clause} group by ratio order by count(*) desc, value", tuple(params)
+    ).fetchall()
+    out = [{"value": str(row["value"]), "count": int(row["count"])} for row in rows]
+    other_clause = "ratio = ''"
+    if extra_where:
+        other_clause = f"({other_clause}) and ({extra_where})"
+    other_count = int(connection.execute(f"select count(*) from task_index where {other_clause}", tuple(params)).fetchone()[0])
     if other_count:
-        rows.append({"value": RATIO_OTHER_VALUE, "count": other_count})
-    return rows
+        out.append({"value": RATIO_OTHER_VALUE, "count": other_count})
+    return out
