@@ -672,8 +672,9 @@ function taskCardActionsHtml(taskId: string, queueSection = "") {
   const archiveLabel = escapeHtml(translate("taskContext.archive"));
   const deleteLabel = escapeHtml(translate("taskContext.delete"));
   const shareLabel = escapeHtml(translate("share.button"));
-  return `
-      <div class="task-card-actions" role="group" aria-label="${actionGroupLabel}">
+  const task = state.tasks.find((t: any) => String(t.task_id) === taskId);
+  const isShared = Boolean(task?.shared_at);
+  const shareButton = isShared ? "" : `
         <button class="task-share-button" type="button" data-share-task-id="${taskId}" aria-label="${shareLabel}" title="${shareLabel}">
           <svg class="task-action-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
             <circle cx="6" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
@@ -681,7 +682,10 @@ function taskCardActionsHtml(taskId: string, queueSection = "") {
             <circle cx="14" cy="15" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
             <path d="M8 8.8L12 6.2M8 11.2L12 13.8" stroke="currentColor" stroke-width="1.5" fill="none"/>
           </svg>
-        </button>
+        </button>`;
+  return `
+      <div class="task-card-actions" role="group" aria-label="${actionGroupLabel}">
+        ${shareButton}
         <button class="task-archive-button" type="button" data-archive-task-id="${taskId}" aria-label="${archiveLabel}" title="${archiveLabel}">
           <svg class="task-action-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
             <path d="M4 6h12v11H4z" />

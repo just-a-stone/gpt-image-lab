@@ -216,6 +216,14 @@ class ShareStore:
             "next_cursor": next_cursor,
         }
 
+    def active_shared_task_ids(self, owner: str) -> set[str]:
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                "select task_id from shared_tasks where owner = ? and status = ?",
+                (owner, SHARE_STATUS_ACTIVE),
+            ).fetchall()
+        return {str(row["task_id"]) for row in rows}
+
     def cleanup_for_task(self, task_id: str) -> None:
         with closing(self._connect()) as connection:
             with connection:

@@ -4,6 +4,7 @@ import json
 from typing import Any, Iterable
 
 from .context import WebUIContext
+from .share_store import ShareStore
 from .task_metadata import _gallery_item_response, _with_file_urls
 
 
@@ -51,9 +52,16 @@ def queue_snapshot(ctx: WebUIContext, *, owner: str | None = None) -> dict[str, 
 
 
 def event_snapshot(ctx: WebUIContext, *, owner: str | None = None) -> dict[str, Any]:
+    tasks = ctx.storage.list_recent_task_cards(limit=200, owner=owner)
+    share_store = ShareStore(ctx.storage.task_index.path)
+    shared_ids = share_store.active_shared_task_ids(owner or "")
+    if shared_ids:
+        for task in tasks:
+            if str(task.get("task_id") or "") in shared_ids:
+                task["shared_at"] = True
     return {
         "type": "snapshot",
-        "tasks": ctx.storage.list_recent_task_cards(limit=200, owner=owner),
+        "tasks": tasks,
         "queue": queue_snapshot(ctx, owner=owner),
         "gallery": [_gallery_item_response(item) for item in ctx.gallery_storage.list_items(owner=owner)],
         "auth": ctx.route_helpers["auth_event_payload"](),
@@ -82,15 +90,20 @@ def task_event(ctx: WebUIContext, task_id: str, *, owner: str | None = None) -> 
     task_meta = ctx.storage.read_metadata(task_id)
     if owner is not None and str(task_meta.get("owner") or "") != owner:
         return None
+    task = _with_file_urls(
+        task_meta,
+        ctx.route_helpers["visible_running_task_ids"](),
+        ctx.gallery_storage,
+        ctx.reference_asset_storage,
+        include_request=False,
+    )
+    if owner is not None:
+        share_store = ShareStore(ctx.storage.task_index.path)
+        if task_id in share_store.active_shared_task_ids(owner or ""):
+            task["shared_at"] = True
     return {
         "type": "task",
-        "task": _with_file_urls(
-            task_meta,
-            ctx.route_helpers["visible_running_task_ids"](),
-            ctx.gallery_storage,
-            ctx.reference_asset_storage,
-            include_request=False,
-        ),
+        "task": task,
     }
 
 
