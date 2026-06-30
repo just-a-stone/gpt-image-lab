@@ -1656,6 +1656,11 @@ button, input, select, textarea {
   cursor: not-allowed;
 }
 
+#galleryCategoryManageToggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .task-history-tools .status-text {
   text-align: left;
   font-size: 11px;

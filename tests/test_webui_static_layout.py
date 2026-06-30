@@ -942,7 +942,7 @@ class WebUIStaticLayoutTests(WebUIStaticTestCase):
         self.assertIn('id="galleryManageButton"', html)
         self.assertNotIn('id="galleryManageSummary"', html)
         self.assertNotIn("查看全部", html)
-        self.assertIn(">管理公用库</button>", html)
+        self.assertIn(">管理参考图</button>", html)
         self.assertIn('data-quick-gallery-category="portrait"', html)
         self.assertIn('data-quick-gallery-category="character"', html)
         self.assertIn('data-quick-gallery-category="product"', html)

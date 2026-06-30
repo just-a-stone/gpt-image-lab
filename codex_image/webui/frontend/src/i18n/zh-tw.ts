@@ -363,7 +363,7 @@ export const ZH_TW_DICTIONARY: TranslationDictionary = {
     "gallery.categoryCharacterRole": "角色參考",
     "gallery.categoryProductRole": "產品參考",
     "gallery.referenceRole": "參考圖",
-    "gallery.manage": "管理公用庫",
+    "gallery.manage": "管理參考圖",
     "gallery.loadFailed": "圖庫讀取失敗",
     "gallery.imageOrderUpdateFailed": "更新圖片順序失敗",
     "gallery.imageOrderUpdated": "圖片順序已更新",
