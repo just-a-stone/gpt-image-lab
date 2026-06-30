@@ -311,6 +311,16 @@ def _has_stale_running_output_record(metadata: dict[str, Any]) -> bool:
     )
 
 
+def _rewrite_legacy_url(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    if value.startswith("/outputs/"):
+        return "/api/outputs/" + value[len("/outputs/"):]
+    if value.startswith("/inputs/"):
+        return "/api/inputs/" + value[len("/inputs/"):]
+    return value
+
+
 def _with_file_urls(
     metadata: dict[str, Any],
     active_task_ids: set[str] | None = None,
@@ -362,6 +372,19 @@ def _with_file_urls(
     if reference_assets or gallery_refs:
         enriched["input_sources"] = _input_sources(task_id, input_names, gallery_refs, reference_assets)
     _with_output_thumbnail_urls(enriched, metadata, task_id)
+    for key in ("output_url",):
+        if enriched.get(key):
+            enriched[key] = _rewrite_legacy_url(enriched[key])
+    for key in ("output_urls", "thumbnail_urls"):
+        if isinstance(enriched.get(key), list):
+            enriched[key] = [_rewrite_legacy_url(u) for u in enriched[key]]
+    raw_outputs = enriched.get("outputs")
+    if isinstance(raw_outputs, list):
+        for record in raw_outputs:
+            if isinstance(record, dict):
+                for key in ("url", "thumbnail_url"):
+                    if record.get(key):
+                        record[key] = _rewrite_legacy_url(record[key])
     return enriched
 
 
