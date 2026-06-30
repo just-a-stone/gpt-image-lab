@@ -2,19 +2,29 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Body, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 
 from codex_image.webui.context import WebUIContext
+from codex_image.webui.owner import resolve_owner
 from codex_image.webui.storage import _guess_mime_type
 from codex_image.webui.task_metadata import _gallery_category_response, _gallery_item_response, _reference_asset_response
 
 
 def register_gallery_routes(app: FastAPI, ctx: WebUIContext) -> None:
-    @app.get("/api/gallery")
-    def list_gallery(category: str | None = None) -> dict[str, Any]:
+    def _assert_gallery_owner(item_id: str, owner: str) -> None:
         try:
-            items = ctx.gallery_storage.list_items(category=category)
+            item = ctx.gallery_storage.read_item(item_id)
+        except (FileNotFoundError, ValueError) as exc:
+            raise HTTPException(status_code=404, detail="Gallery item not found") from exc
+        if str(item.get("owner") or "") != owner:
+            raise HTTPException(status_code=404, detail="Gallery item not found")
+
+    @app.get("/api/gallery")
+    def list_gallery(request: Request, category: str | None = None) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
+        try:
+            items = ctx.gallery_storage.list_items(category=category, owner=owner)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {
@@ -73,11 +83,13 @@ def register_gallery_routes(app: FastAPI, ctx: WebUIContext) -> None:
 
     @app.post("/api/gallery")
     async def create_gallery_item(
+        request: Request,
         name: str = Form(...),
         category: str = Form(...),
         prompt_note: str | None = Form(None),
         image: UploadFile = File(...),
     ) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
         data = await image.read()
         if not data:
             raise HTTPException(status_code=400, detail="Image is required")
@@ -91,6 +103,7 @@ def register_gallery_routes(app: FastAPI, ctx: WebUIContext) -> None:
                 data=data,
                 content_type=image.content_type,
                 prompt_note=prompt_note,
+                owner=owner,
             )
         except FileExistsError as exc:
             raise HTTPException(status_code=409, detail="Gallery name already exists") from exc
@@ -107,7 +120,9 @@ def register_gallery_routes(app: FastAPI, ctx: WebUIContext) -> None:
         return {"items": [_gallery_item_response(item) for item in items]}
 
     @app.patch("/api/gallery/{item_id}")
-    def update_gallery_item(item_id: str, payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    def update_gallery_item(item_id: str, request: Request, payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
+        _assert_gallery_owner(item_id, owner)
         try:
             item = ctx.gallery_storage.update_item(
                 item_id,
@@ -125,7 +140,9 @@ def register_gallery_routes(app: FastAPI, ctx: WebUIContext) -> None:
         return {"item": _gallery_item_response(item)}
 
     @app.put("/api/gallery/{item_id}/image")
-    async def replace_gallery_item_image(item_id: str, image: UploadFile = File(...)) -> dict[str, Any]:
+    async def replace_gallery_item_image(item_id: str, request: Request, image: UploadFile = File(...)) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
+        _assert_gallery_owner(item_id, owner)
         data = await image.read()
         if not data:
             raise HTTPException(status_code=400, detail="Image is required")
@@ -145,7 +162,9 @@ def register_gallery_routes(app: FastAPI, ctx: WebUIContext) -> None:
         return {"item": _gallery_item_response(item)}
 
     @app.delete("/api/gallery/{item_id}")
-    def delete_gallery_item(item_id: str) -> dict[str, Any]:
+    def delete_gallery_item(item_id: str, request: Request) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
+        _assert_gallery_owner(item_id, owner)
         try:
             ctx.gallery_storage.delete_item(item_id)
         except (FileNotFoundError, ValueError) as exc:
@@ -153,7 +172,9 @@ def register_gallery_routes(app: FastAPI, ctx: WebUIContext) -> None:
         return {"ok": True, "id": item_id}
 
     @app.get("/api/gallery/{item_id}/image")
-    def get_gallery_image(item_id: str) -> Response:
+    def get_gallery_image(item_id: str, request: Request) -> Response:
+        owner = resolve_owner(request) or ""
+        _assert_gallery_owner(item_id, owner)
         try:
             item = ctx.gallery_storage.read_item(item_id)
             path = ctx.gallery_storage.image_path(item_id)
@@ -166,12 +187,22 @@ def register_gallery_routes(app: FastAPI, ctx: WebUIContext) -> None:
         )
 
     @app.get("/api/reference-assets/recent")
-    def list_reference_assets(limit: int = 20) -> dict[str, Any]:
+    def list_reference_assets(request: Request, limit: int = 20) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
         clean_limit = max(0, min(int(limit), 50))
-        return {"items": [_reference_asset_response(item) for item in ctx.reference_asset_storage.list_recent(limit=clean_limit)]}
+        return {"items": [_reference_asset_response(item) for item in ctx.reference_asset_storage.list_recent(limit=clean_limit, owner=owner)]}
 
     @app.delete("/api/reference-assets/{asset_id}")
-    def delete_reference_asset(asset_id: str) -> dict[str, bool]:
+    def delete_reference_asset(asset_id: str, request: Request) -> dict[str, bool]:
+        owner = resolve_owner(request) or ""
+        try:
+            item = ctx.reference_asset_storage.read_item(asset_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid reference asset id") from exc
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=f"Reference asset not found: {asset_id}") from exc
+        if str(item.get("owner") or "") != owner:
+            raise HTTPException(status_code=404, detail=f"Reference asset not found: {asset_id}")
         try:
             ctx.reference_asset_storage.delete_item(asset_id)
         except ValueError as exc:
@@ -181,9 +212,12 @@ def register_gallery_routes(app: FastAPI, ctx: WebUIContext) -> None:
         return {"ok": True}
 
     @app.get("/api/reference-assets/{asset_id}/image")
-    def get_reference_asset_image(asset_id: str) -> Response:
+    def get_reference_asset_image(asset_id: str, request: Request) -> Response:
+        owner = resolve_owner(request) or ""
         try:
             item = ctx.reference_asset_storage.read_item(asset_id)
+            if str(item.get("owner") or "") != owner:
+                raise FileNotFoundError(asset_id)
             path = ctx.reference_asset_storage.image_path(asset_id)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="Invalid reference asset id") from exc

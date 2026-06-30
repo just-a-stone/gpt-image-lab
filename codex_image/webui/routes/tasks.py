@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 
 from codex_image.webui.context import WebUIContext
 from codex_image.webui.feature_flags import ensure_deletion_allowed
+from codex_image.webui.owner import resolve_owner
 from codex_image.webui.storage import utc_now
 from codex_image.webui.task_metadata import (
     _accept_partial_task_successes,
@@ -31,19 +32,31 @@ from codex_image.webui.thumbnails import create_image_thumbnail, thumbnail_needs
 def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
     h = ctx.route_helpers
 
+    def _load_owned_task(task_id: str, request: Request) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
+        try:
+            metadata = ctx.storage.read_metadata(task_id)
+        except (FileNotFoundError, ValueError) as exc:
+            raise HTTPException(status_code=404, detail="Task not found") from exc
+        if str(metadata.get("owner") or "") != owner:
+            raise HTTPException(status_code=404, detail="Task not found")
+        return metadata
+
     @app.get("/api/tasks")
-    def list_tasks() -> dict[str, Any]:
+    def list_tasks(request: Request) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
         active_ids = h["visible_running_task_ids"]()
         return {
             "tasks": [
                 _with_file_urls(task, active_ids, ctx.gallery_storage, ctx.reference_asset_storage, include_request=False)
-                for task in ctx.storage.list_tasks()
+                for task in ctx.storage.list_tasks(owner=owner)
             ]
         }
 
     @app.get("/api/tasks/recent")
-    def list_recent_tasks(limit: int = Query(200, ge=1, le=500)) -> dict[str, Any]:
-        tasks = ctx.storage.list_recent_task_cards(limit=limit)
+    def list_recent_tasks(request: Request, limit: int = Query(200, ge=1, le=500)) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
+        tasks = ctx.storage.list_recent_task_cards(limit=limit, owner=owner)
         tasks_by_id = {str(task.get("task_id") or ""): task for task in tasks}
         queue_state = ctx.queue_storage.read_state()
         active_ids = [
@@ -54,19 +67,24 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
             if task_id in tasks_by_id:
                 continue
             try:
-                task = ctx.storage.task_sidebar_card(task_id)
+                task_meta = ctx.storage.read_metadata(task_id)
             except (FileNotFoundError, ValueError):
                 continue
+            if str(task_meta.get("owner") or "") != owner:
+                continue
+            task = ctx.storage.task_sidebar_card(task_id)
             tasks_by_id[task_id] = task
             tasks.append(task)
         return {"tasks": tasks}
 
     @app.get("/api/task-history/summary")
-    def task_history_summary() -> dict[str, Any]:
-        return ctx.storage.task_history_summary()
+    def task_history_summary(request: Request) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
+        return ctx.storage.task_history_summary(owner=owner)
 
     @app.get("/api/task-history/tasks")
     def task_history_tasks(
+        request: Request,
         limit: int = Query(50, ge=1, le=100),
         cursor: str | None = Query(None),
         q: str = Query(""),
@@ -83,6 +101,7 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
         sort: str = Query("newest"),
         direction: str = Query("next"),
     ) -> dict[str, Any]:
+        owner = resolve_owner(request) or ""
         return ctx.storage.query_task_history(
             limit=limit,
             cursor=cursor,
@@ -99,29 +118,25 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
             archived=archived,
             sort=sort,
             direction=direction,
+            owner=owner,
         )
 
     @app.get("/api/tasks/{task_id}")
-    def get_task(task_id: str) -> dict[str, Any]:
-        try:
-            metadata = h["with_stored_request_payload"](task_id, ctx.storage.read_metadata(task_id))
-            return {
-                "task": _with_file_urls(
-                    metadata,
-                    h["visible_running_task_ids"](),
-                    ctx.gallery_storage,
-                    ctx.reference_asset_storage,
-                )
-            }
-        except FileNotFoundError as exc:
-            raise HTTPException(status_code=404, detail="Task not found") from exc
+    def get_task(task_id: str, request: Request) -> dict[str, Any]:
+        metadata = _load_owned_task(task_id, request)
+        metadata = h["with_stored_request_payload"](task_id, metadata)
+        return {
+            "task": _with_file_urls(
+                metadata,
+                h["visible_running_task_ids"](),
+                ctx.gallery_storage,
+                ctx.reference_asset_storage,
+            )
+        }
 
     @app.patch("/api/tasks/{task_id}/viewed")
-    def mark_task_viewed(task_id: str) -> dict[str, Any]:
-        try:
-            metadata = ctx.storage.read_metadata(task_id)
-        except (FileNotFoundError, ValueError) as exc:
-            raise HTTPException(status_code=404, detail="Task not found") from exc
+    def mark_task_viewed(task_id: str, request: Request) -> dict[str, Any]:
+        metadata = _load_owned_task(task_id, request)
         metadata["viewed_at"] = utc_now()
         ctx.storage.write_metadata(task_id, metadata)
         return {
@@ -135,12 +150,9 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
         }
 
     @app.get("/api/tasks/{task_id}/outputs.zip")
-    def download_task_outputs_zip(task_id: str, selected: bool = Query(False)) -> StreamingResponse:
-        try:
-            metadata = ctx.storage.read_metadata(task_id)
-            output_paths = _downloadable_output_paths(ctx.storage, metadata, selected_only=selected)
-        except (FileNotFoundError, ValueError) as exc:
-            raise HTTPException(status_code=404, detail="Task not found") from exc
+    def download_task_outputs_zip(task_id: str, request: Request, selected: bool = Query(False)) -> StreamingResponse:
+        metadata = _load_owned_task(task_id, request)
+        output_paths = _downloadable_output_paths(ctx.storage, metadata, selected_only=selected)
         if len(output_paths) < 2:
             detail = "Task has fewer than two selected outputs" if selected else "Task has fewer than two downloadable outputs"
             raise HTTPException(status_code=400, detail=detail)
@@ -165,11 +177,8 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
     def reveal_task_output_directory(task_id: str, request: Request) -> dict[str, Any]:
         if request.headers.get("x-requested-with") != "codex-image-webui":
             raise HTTPException(status_code=403, detail="WebUI request header required")
-        try:
-            metadata = ctx.storage.read_metadata(task_id)
-            output_paths = _downloadable_output_paths(ctx.storage, metadata, selected_only=False)
-        except (FileNotFoundError, ValueError) as exc:
-            raise HTTPException(status_code=404, detail="Task not found") from exc
+        metadata = _load_owned_task(task_id, request)
+        output_paths = _downloadable_output_paths(ctx.storage, metadata, selected_only=False)
         if not output_paths:
             raise HTTPException(status_code=409, detail="Task has no local output files")
         output_directory = output_paths[0].parent
@@ -180,11 +189,8 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
         return {"ok": True, "path": str(output_directory)}
 
     @app.get("/api/tasks/{task_id}/inputs/{input_index}/thumbnail")
-    def get_task_input_thumbnail(task_id: str, input_index: int) -> FileResponse:
-        try:
-            metadata = ctx.storage.read_metadata(task_id)
-        except (FileNotFoundError, ValueError) as exc:
-            raise HTTPException(status_code=404, detail="Task not found") from exc
+    def get_task_input_thumbnail(task_id: str, input_index: int, request: Request) -> FileResponse:
+        metadata = _load_owned_task(task_id, request)
         if input_index < 1:
             raise HTTPException(status_code=404, detail="Input not found")
 
@@ -207,11 +213,8 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
         )
 
     @app.get("/api/tasks/{task_id}/outputs/{output_index}/thumbnail")
-    def get_task_output_thumbnail(task_id: str, output_index: int) -> FileResponse:
-        try:
-            metadata = ctx.storage.read_metadata(task_id)
-        except (FileNotFoundError, ValueError) as exc:
-            raise HTTPException(status_code=404, detail="Task not found") from exc
+    def get_task_output_thumbnail(task_id: str, output_index: int, request: Request) -> FileResponse:
+        metadata = _load_owned_task(task_id, request)
         if output_index < 1:
             raise HTTPException(status_code=404, detail="Output not found")
 
@@ -235,9 +238,9 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
         )
 
     @app.patch("/api/tasks/{task_id}/outputs/{output_index}/selected")
-    def update_task_output_selection(task_id: str, output_index: int, payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    def update_task_output_selection(task_id: str, output_index: int, request: Request, payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
+        metadata = _load_owned_task(task_id, request)
         try:
-            metadata = ctx.storage.read_metadata(task_id)
             _ensure_outputs_mutable(task_id, metadata)
             metadata = _set_task_output_selected(ctx.storage, task_id, metadata, output_index, bool(payload.get("selected")))
             return {
@@ -254,10 +257,10 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     @app.post("/api/tasks/{task_id}/outputs/delete-unselected")
-    def delete_unselected_task_outputs(task_id: str) -> dict[str, Any]:
+    def delete_unselected_task_outputs(task_id: str, request: Request) -> dict[str, Any]:
         ensure_deletion_allowed()
+        metadata = _load_owned_task(task_id, request)
         try:
-            metadata = ctx.storage.read_metadata(task_id)
             _ensure_outputs_mutable(task_id, metadata)
             metadata = _delete_unselected_task_outputs(ctx.storage, task_id, metadata)
             return {
@@ -274,8 +277,9 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     @app.patch("/api/tasks/{task_id}/archive")
-    def update_task_archive(task_id: str, payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    def update_task_archive(task_id: str, request: Request, payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
         ensure_deletion_allowed()
+        _load_owned_task(task_id, request)
         try:
             metadata = h["set_task_archived"](task_id, bool(payload.get("archived")))
             return {
@@ -290,11 +294,8 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
             raise HTTPException(status_code=404, detail="Task not found") from exc
 
     @app.post("/api/tasks/{task_id}/retry-failed")
-    def retry_failed_task(task_id: str, payload: dict[str, Any] | None = Body(None)) -> dict[str, Any]:
-        try:
-            metadata = ctx.storage.read_metadata(task_id)
-        except FileNotFoundError as exc:
-            raise HTTPException(status_code=404, detail="Task not found") from exc
+    def retry_failed_task(task_id: str, request: Request, payload: dict[str, Any] | None = Body(None)) -> dict[str, Any]:
+        metadata = _load_owned_task(task_id, request)
         if h["queue_has_running_task"](task_id) or task_id in ctx.active_task_ids:
             raise HTTPException(status_code=409, detail="Running task cannot be retried")
         if task_id in ctx.queue_storage.read_state()["waiting"]:
@@ -334,11 +335,8 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
         }
 
     @app.post("/api/tasks/{task_id}/accept-successes")
-    def accept_task_successes(task_id: str) -> dict[str, Any]:
-        try:
-            metadata = ctx.storage.read_metadata(task_id)
-        except FileNotFoundError as exc:
-            raise HTTPException(status_code=404, detail="Task not found") from exc
+    def accept_task_successes(task_id: str, request: Request) -> dict[str, Any]:
+        metadata = _load_owned_task(task_id, request)
         if h["queue_has_running_task"](task_id) or task_id in ctx.active_task_ids:
             raise HTTPException(status_code=409, detail="Running task cannot be accepted")
         if task_id in ctx.queue_storage.read_state()["waiting"]:
@@ -361,8 +359,9 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
         }
 
     @app.delete("/api/tasks/{task_id}")
-    def delete_task(task_id: str) -> dict[str, Any]:
+    def delete_task(task_id: str, request: Request) -> dict[str, Any]:
         ensure_deletion_allowed()
+        _load_owned_task(task_id, request)
         if task_id in ctx.active_task_ids or h["queue_has_running_task"](task_id):
             raise HTTPException(status_code=409, detail="Running task cannot be deleted")
         try:
