@@ -24,6 +24,12 @@
   中文 · <a href="README.en.md">English</a>
 </p>
 
+<p align="center">
+  <img src="assets/homepage.png" alt="Fei Yang Lab 首页界面预览" width="880">
+</p>
+
+<p align="center"><sub>👆 WebUI 工作台主界面 · 任务队列 · 实时预览 · 多图画廊</sub></p>
+
 ---
 
 ## 简介
@@ -38,6 +44,23 @@ Fei Yang Lab（飞羊实验室）是基于 [iLab GPT Conjure](https://github.com
 - **Docker 一键部署**：内置 Dockerfile 和 docker-compose.yml，支持多用户共享部署。
 - **SSE 心跳保活**：适配 Docker / 反向代理环境，避免长连接超时断开。
 - **环境变量管控**：`WEBUI_OWNER_SECRET`（身份密钥）、`WEBUI_DISABLE_DELETION`（禁用删除）、`CODEX_IMAGE_REQUEST_TIMEOUT_SECONDS`（请求超时）等。
+
+## 界面预览
+
+| 中文界面 | English UI |
+|:---:|:---:|
+| <img src="assets/UI_cn.png" alt="中文界面" width="420"> | <img src="assets/UI_en.png" alt="English UI" width="420"> |
+
+<details>
+<summary>📸 更多截图</summary>
+
+- 顶部主界面：任务队列 + 实时进度 + 结果预览（见上方首页大图）。
+- 提示词编辑器：`@` 图库 chip、`#` 颜色 chip、`~` 提示词片段 chip 三种原子插入。
+- 图像编辑器：多图层组合、默认锁定比例变换、Shift 自由变换、局部擦除。
+- `/explore` 公共分享画廊：无限滚动、多图模态框、一键复制提示词。
+- `/history` 历史页：SQLite 分页、搜索、筛选、网格/列表视图。
+
+</details>
 
 ## 功能
 

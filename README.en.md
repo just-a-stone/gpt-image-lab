@@ -24,6 +24,12 @@
   English · <a href="README.md">中文</a>
 </p>
 
+<p align="center">
+  <img src="assets/homepage.png" alt="Fei Yang Lab homepage preview" width="880">
+</p>
+
+<p align="center"><sub>👆 WebUI workbench · task queue · live preview · multi-image gallery</sub></p>
+
 ---
 
 ## Overview
@@ -38,6 +44,23 @@ Key additions in this fork:
 - **Docker deployment**: Built-in Dockerfile and docker-compose.yml for multi-user shared deployments.
 - **SSE heartbeat**: Keeps SSE connections alive through Docker / reverse-proxy environments.
 - **Environment variable controls**: `WEBUI_OWNER_SECRET`, `WEBUI_DISABLE_DELETION`, `CODEX_IMAGE_REQUEST_TIMEOUT_SECONDS`, and more.
+
+## UI Preview
+
+| Chinese UI | English UI |
+|:---:|:---:|
+| <img src="assets/UI_cn.png" alt="Chinese UI" width="420"> | <img src="assets/UI_en.png" alt="English UI" width="420"> |
+
+<details>
+<summary>📸 More screenshots</summary>
+
+- Main workbench: task queue + live progress + result preview (see hero image above).
+- Prompt editor: `@` gallery chips, `#` color chips, `~` prompt-snippet chips.
+- Image editor: multi-layer composition, aspect-locked transforms, Shift for free transform, local erase.
+- `/explore` public gallery: infinite scroll, multi-image modal, one-click prompt copy.
+- `/history` page: SQLite pagination, search, filters, grid/list views.
+
+</details>
 
 ## Features
 
