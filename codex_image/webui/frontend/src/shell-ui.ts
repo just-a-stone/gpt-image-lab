@@ -347,6 +347,9 @@ function resetForm() {
   closeGallery();
   closeImageEditor();
   state.selectedTaskId = null;
+  state.previewSuppressed = true;
+  state.previewTask = null;
+  state.previewRenderKey = null;
   state.mode = "generate";
   revokeUploadPreviewUrls(state.images);
   state.images = [];
@@ -379,6 +382,7 @@ function resetForm() {
   renderTasks();
   renderPreview();
   updateRequestPreview();
+  getLegacyBridge().methods.refreshByokRunButton?.();
   setStatus(translate("status.waiting"), "");
 }
 

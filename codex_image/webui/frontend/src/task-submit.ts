@@ -376,7 +376,7 @@ async function runTask() {
   } finally {
     window.clearTimeout(submitTimeoutId);
     stopRunFeedback();
-    els.runButton.disabled = !state.authAvailable;
+    els.runButton.disabled = !state.authAvailable && !isByokActive();
   }
 }
 

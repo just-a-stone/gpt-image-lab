@@ -12514,6 +12514,7 @@
       runFeedbackAction: null,
       uiClockTimerId: null,
       previewRenderKey: null,
+      previewSuppressed: false,
       tasksRenderKey: null,
       taskSearchHistoryResultIds: [],
       taskSearchHistoryRequestSeq: 0,
@@ -37674,7 +37675,7 @@ ${galleryText}`;
     } finally {
       window.clearTimeout(submitTimeoutId);
       stopRunFeedback2();
-      els34.runButton.disabled = !state25.authAvailable;
+      els34.runButton.disabled = !state25.authAvailable && !isByokActive();
     }
   }
   function initTaskSubmitFeature() {
@@ -40090,6 +40091,23 @@ ${galleryText}`;
     return status;
   }
   function renderPreview5(task = null) {
+    if (state29.previewSuppressed && !task) {
+      const suppressedKey = "suppressed:none";
+      if (state29.previewRenderKey === suppressedKey) {
+        return;
+      }
+      state29.previewRenderKey = suppressedKey;
+      closePromptPopover8();
+      cancelDeferredPreviewRender();
+      clearPreviewGridLayout();
+      if (els38.previewGrid) {
+        els38.previewGrid.innerHTML = `<div class="empty-preview">${escapeHtml19(translate("preview.empty"))}</div>`;
+      }
+      return;
+    }
+    if (task) {
+      state29.previewSuppressed = false;
+    }
     const selectedTask = state29.tasks.find((item) => String(item.task_id) === String(state29.selectedTaskId));
     const visibleSelectedTask = selectedTask && !isTaskArchived4(selectedTask.task_id) ? selectedTask : null;
     const selected = task || visibleSelectedTask || state29.tasks.find((item) => !isTaskArchived4(item.task_id)) || selectedTask || state29.tasks[0];
@@ -41278,6 +41296,7 @@ ${galleryText}`;
   async function selectTask2(taskId) {
     closePromptPopover9();
     state31.selectedTaskId = taskId;
+    state31.previewSuppressed = false;
     let task = state31.tasks.find((item) => String(item.task_id) === String(taskId));
     if (!task) return;
     if (task.summary_only) {
@@ -42037,6 +42056,9 @@ ${galleryText}`;
     closeGallery4();
     closeImageEditor3();
     state32.selectedTaskId = null;
+    state32.previewSuppressed = true;
+    state32.previewTask = null;
+    state32.previewRenderKey = null;
     state32.mode = "generate";
     revokeUploadPreviewUrls3(state32.images);
     state32.images = [];
@@ -42069,6 +42091,7 @@ ${galleryText}`;
     renderTasks10();
     renderPreview8();
     updateRequestPreview13();
+    getLegacyBridge().methods.refreshByokRunButton?.();
     setStatus23(translate("status.waiting"), "");
   }
   async function copyJson() {

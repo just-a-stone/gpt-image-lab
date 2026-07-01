@@ -44,6 +44,7 @@ export function createDefaultState(): WebUIState {
   runFeedbackAction: null,
   uiClockTimerId: null,
   previewRenderKey: null,
+  previewSuppressed: false,
   tasksRenderKey: null,
   taskSearchHistoryResultIds: [],
   taskSearchHistoryRequestSeq: 0,

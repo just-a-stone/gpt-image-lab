@@ -211,6 +211,7 @@ async function restoreTaskInputs(task, options = {}) {
 async function selectTask(taskId) {
   closePromptPopover();
   state.selectedTaskId = taskId;
+  state.previewSuppressed = false;
   let task = state.tasks.find((item) => String(item.task_id) === String(taskId));
   if (!task) return;
   if (task.summary_only) {

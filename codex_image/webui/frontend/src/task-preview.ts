@@ -74,6 +74,23 @@ function taskPreviewStatus(task: any) {
 }
 
 function renderPreview(task: any = null) {
+  if (state.previewSuppressed && !task) {
+    const suppressedKey = "suppressed:none";
+    if (state.previewRenderKey === suppressedKey) {
+      return;
+    }
+    state.previewRenderKey = suppressedKey;
+    closePromptPopover();
+    cancelDeferredPreviewRender();
+    clearPreviewGridLayout();
+    if (els.previewGrid) {
+      els.previewGrid.innerHTML = `<div class="empty-preview">${escapeHtml(translate("preview.empty"))}</div>`;
+    }
+    return;
+  }
+  if (task) {
+    state.previewSuppressed = false;
+  }
   const selectedTask = state.tasks.find((item: any) => String(item.task_id) === String(state.selectedTaskId));
   const visibleSelectedTask = selectedTask && !isTaskArchived(selectedTask.task_id) ? selectedTask : null;
   const selected = task || visibleSelectedTask || state.tasks.find((item: any) => !isTaskArchived(item.task_id)) || selectedTask || state.tasks[0];
