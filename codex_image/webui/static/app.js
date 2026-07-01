@@ -1344,6 +1344,7 @@
     "share.revoked": "Share revoked",
     "share.revokeFailed": "Failed to revoke share",
     "share.onlyCompleted": "Only completed tasks can be shared",
+    "share.noOutput": "Task failed with no output, cannot be shared",
     "share.statusFailed": "Failed to check share status",
     "share.exploreLink": "Explore"
   };
@@ -10292,6 +10293,7 @@
     "share.revoked": "\u5DF2\u53D6\u6D88\u5206\u4EAB",
     "share.revokeFailed": "\u53D6\u6D88\u5206\u4EAB\u5931\u8D25",
     "share.onlyCompleted": "\u53EA\u80FD\u5206\u4EAB\u5DF2\u5B8C\u6210\u7684\u4EFB\u52A1",
+    "share.noOutput": "\u751F\u6210\u4EFB\u52A1\u5931\u8D25\uFF0C\u4E0D\u53EF\u5206\u4EAB",
     "share.statusFailed": "\u83B7\u53D6\u5206\u4EAB\u72B6\u6001\u5931\u8D25",
     "share.exploreLink": "\u63A2\u7D22"
   };
@@ -37027,6 +37029,15 @@ ${galleryText}`;
     const fn = getLegacyBridge().methods.setStatus;
     if (typeof fn === "function") fn(msg, kind);
   }
+  function renderTasks6() {
+    const fn = getLegacyBridge().methods.renderTasks;
+    if (typeof fn === "function") fn();
+  }
+  function taskOutputUrls2(task) {
+    const fn = getLegacyBridge().methods.taskOutputUrls;
+    if (typeof fn === "function") return fn(task) || [];
+    return Array.isArray(task?.output_urls) ? task.output_urls : [];
+  }
   function closePromptPopover6() {
     const fn = getLegacyBridge().methods.closePromptPopover;
     if (typeof fn === "function") fn();
@@ -37066,6 +37077,10 @@ ${galleryText}`;
       setStatus17(translate("share.onlyCompleted"), "error");
       return;
     }
+    if (taskOutputUrls2(task).length === 0) {
+      setStatus17(translate("share.noOutput"), "error");
+      return;
+    }
     closePromptPopover6();
     let shareInfo;
     try {
@@ -37082,6 +37097,8 @@ ${galleryText}`;
         onConfirm: async () => {
           try {
             await unshareTask(taskId);
+            task.shared_at = null;
+            renderTasks6();
             setStatus17(translate("share.revoked"), "ok");
           } catch (err) {
             setStatus17(err instanceof Error ? err.message : translate("share.revokeFailed"), "error");
@@ -37158,6 +37175,8 @@ ${galleryText}`;
       confirmBtn.disabled = true;
       try {
         await shareTask(taskId, promptCheckbox.checked, noteInput.value.trim());
+        task.shared_at = (/* @__PURE__ */ new Date()).toISOString();
+        renderTasks6();
         dialog.remove();
         setStatus17(translate("share.shared"), "ok");
       } catch (err) {
@@ -37641,7 +37660,7 @@ ${galleryText}`;
     }
     return method(...args);
   }
-  var renderTasks6 = () => legacyMethod35("renderTasks");
+  var renderTasks7 = () => legacyMethod35("renderTasks");
   var syncTaskSearchHistoryResults = () => legacyMethod35("syncTaskSearchHistoryResults");
   var setExpandedTaskGroupKey2 = (...args) => legacyMethod35("setExpandedTaskGroupKey", ...args);
   var scrollExpandedTaskGroupToTop3 = (...args) => legacyMethod35("scrollExpandedTaskGroupToTop", ...args);
@@ -37683,7 +37702,7 @@ ${galleryText}`;
     });
     updateTaskFilterSummary();
     if (changed && options.render !== false) {
-      renderTasks6();
+      renderTasks7();
     }
   }
   function updateTaskFilterSummary() {
@@ -37728,14 +37747,14 @@ ${galleryText}`;
     taskFilterControls().forEach((element2) => {
       element2.addEventListener("change", () => {
         updateTaskFilterSummary();
-        renderTasks6();
+        renderTasks7();
       });
     });
     updateTaskFilterSummary();
     bindTaskListEvents();
   }
   function handleTaskSearchInput() {
-    renderTasks6();
+    renderTasks7();
     void syncTaskSearchHistoryResults();
   }
   function bindTaskListEvents() {
@@ -37751,7 +37770,7 @@ ${galleryText}`;
     const previousLayout = captureTaskHistoryLayout3();
     const changed = nextKey === null ? setExpandedTaskGroupKey2(null, { immediate: true }) : setExpandedTaskGroupKey2(nextKey, { immediate: true });
     if (changed) {
-      renderTasks6();
+      renderTasks7();
       animateTaskHistoryLayout3(previousLayout);
     }
     if (nextKey && behavior) {
@@ -37785,7 +37804,7 @@ ${galleryText}`;
       const previousLayout = captureTaskHistoryLayout3();
       state26.activeTaskGroupCollapsed = !state26.activeTaskGroupCollapsed;
       state26.tasksRenderKey = null;
-      renderTasks6();
+      renderTasks7();
       animateTaskHistoryLayout3(previousLayout);
       return;
     }
@@ -39444,13 +39463,13 @@ ${galleryText}`;
       });
       if (urls.length) return urls;
     }
-    taskOutputUrls2(task).forEach((url, fallbackIndex) => {
+    taskOutputUrls3(task).forEach((url, fallbackIndex) => {
       const index = taskOutputIndexFromUrl(url) || fallbackIndex + 1;
       pushUrl(taskThumbnailRoute(task, index), index);
     });
     return urls;
   }
-  function taskOutputUrls2(task) {
+  function taskOutputUrls3(task) {
     if (!task) return [];
     const deletedIndexes = taskDeletedOutputIndexes(task);
     if (Array.isArray(task.output_urls) && task.output_urls.length) {
@@ -39578,7 +39597,7 @@ ${galleryText}`;
   function taskVisibleCompletedCount(task) {
     if (!task) return 0;
     const completedRecords = [...taskOutputRecordsByIndex(task).values()].filter((record) => record?.status === "completed" && taskOutputRecordHasDisplayableImage(record)).length;
-    return Math.max(completedRecords, taskOutputUrls2(task).length);
+    return Math.max(completedRecords, taskOutputUrls3(task).length);
   }
   function taskRetrySuccessfulCount(task) {
     return Math.max(taskVisibleCompletedCount(task), nonnegativeInt(task?.generated_count) ?? 0);
@@ -39588,7 +39607,7 @@ ${galleryText}`;
   }
   function taskOutputRecordsByIndex(task) {
     const records = /* @__PURE__ */ new Map();
-    const outputUrls = taskOutputUrls2(task);
+    const outputUrls = taskOutputUrls3(task);
     const structuredOutputs = Array.isArray(task?.outputs) ? task.outputs : [];
     if (!structuredOutputs.length) {
       outputUrls.forEach((url, index) => {
@@ -39667,7 +39686,7 @@ ${galleryText}`;
   function canAcceptTaskSuccesses2(task) {
     if (!task || task.local_pending) return false;
     if (!["failed", "partial_failed"].includes(task.status)) return false;
-    return taskOutputUrls2(task).length > 0;
+    return taskOutputUrls3(task).length > 0;
   }
   function taskRetryReasonText(task) {
     const message = String(task?.last_error || task?.error || "").toLowerCase();
@@ -39890,7 +39909,7 @@ ${galleryText}`;
       taskInputPreviewUrls: taskInputPreviewUrls2,
       taskThumbnailUrls: taskThumbnailUrls2,
       taskThumbnailRoute,
-      taskOutputUrls: taskOutputUrls2,
+      taskOutputUrls: taskOutputUrls3,
       taskDeletedOutputIndexes,
       taskSelectedOutputIndexes,
       taskOutputSelected,
@@ -39986,7 +40005,7 @@ ${galleryText}`;
   function updateTaskInState3(...args) {
     return legacyMethod38("updateTaskInState", ...args);
   }
-  function renderTasks7(...args) {
+  function renderTasks8(...args) {
     return legacyMethod38("renderTasks", ...args);
   }
   function taskApiProviderId3(...args) {
@@ -39995,7 +40014,7 @@ ${galleryText}`;
   function taskApiProviderLabel3(...args) {
     return legacyMethod38("taskApiProviderLabel", ...args);
   }
-  var taskOutputUrls3 = (...args) => legacyMethod38("taskOutputUrls", ...args);
+  var taskOutputUrls4 = (...args) => legacyMethod38("taskOutputUrls", ...args);
   var taskSelectedOutputIndexes2 = (...args) => legacyMethod38("taskSelectedOutputIndexes", ...args);
   var taskOutputSelected2 = (...args) => legacyMethod38("taskOutputSelected", ...args);
   var positiveInt2 = (...args) => legacyMethod38("positiveInt", ...args);
@@ -40044,7 +40063,7 @@ ${galleryText}`;
     }
     state29.previewRenderKey = nextPreviewKey;
     if (status === "running") {
-      if (taskOutputUrls3(selected).length) {
+      if (taskOutputUrls4(selected).length) {
         renderOutputPreview(selected, { running: true });
         return;
       }
@@ -40054,7 +40073,7 @@ ${galleryText}`;
       return;
     }
     if (status === "submitting" || status === "queued") {
-      if (status === "queued" && taskOutputUrls3(selected).length) {
+      if (status === "queued" && taskOutputUrls4(selected).length) {
         renderOutputPreview(selected, { waiting: true });
         return;
       }
@@ -40064,7 +40083,7 @@ ${galleryText}`;
       return;
     }
     if (selected?.status === "failed" || selected?.status === "partial_failed") {
-      if (taskOutputUrls3(selected).length) {
+      if (taskOutputUrls4(selected).length) {
         renderOutputPreview(selected, { failure: true });
         return;
       }
@@ -40080,7 +40099,7 @@ ${galleryText}`;
       bindPreviewRetryButtons();
       return;
     }
-    const outputUrls = taskOutputUrls3(selected);
+    const outputUrls = taskOutputUrls4(selected);
     if (!selected || !outputUrls.length) {
       closePromptPopover8();
       cancelDeferredPreviewRender();
@@ -40094,7 +40113,7 @@ ${galleryText}`;
     if (!task) return "empty:none";
     const taskId = String(task.task_id || "");
     const status = taskPreviewStatus(task);
-    const outputUrls = taskOutputUrls3(task).join("|");
+    const outputUrls = taskOutputUrls4(task).join("|");
     const selectedIndexes = taskSelectedOutputIndexes2(task).join(",");
     const size = task.params?.size || task.output_size || currentSize2();
     if (status === "failed" || status === "partial_failed") {
@@ -40168,7 +40187,7 @@ ${galleryText}`;
     pendingPreviewRenderToken += 1;
   }
   function renderOutputPreview(task, { running = false, failure = false, waiting = false } = {}) {
-    const outputUrls = taskOutputUrls3(task);
+    const outputUrls = taskOutputUrls4(task);
     const hasStatusCard = running || failure || waiting;
     const totalCount = hasStatusCard ? taskTotalCount2(task) : outputUrls.length;
     const itemCount = outputUrls.length + (hasStatusCard ? 1 : 0);
@@ -40468,7 +40487,7 @@ ${galleryText}`;
   }
   function updatePreviewDownloadActions(task) {
     updatePreviewSelectionActions(task);
-    const outputUrls = taskOutputUrls3(task);
+    const outputUrls = taskOutputUrls4(task);
     if (!els38.downloadAllButton) return;
     if (!task?.task_id || outputUrls.length < 2) {
       els38.downloadAllButton.classList.add("hidden");
@@ -40481,7 +40500,7 @@ ${galleryText}`;
     els38.downloadAllButton.classList.remove("hidden");
   }
   function updatePreviewSelectionActions(task) {
-    const outputUrls = taskOutputUrls3(task);
+    const outputUrls = taskOutputUrls4(task);
     const selectedUrls = taskSelectedOutputUrls(task);
     const selectedCount = selectedUrls.length;
     const totalCount = outputUrls.length;
@@ -40513,7 +40532,7 @@ ${galleryText}`;
   }
   function taskSelectedOutputUrls(task) {
     const selectedIndexes = new Set(taskSelectedOutputIndexes2(task));
-    return taskOutputUrls3(task).filter((url, index) => {
+    return taskOutputUrls4(task).filter((url, index) => {
       return selectedIndexes.has(taskOutputIndex2(task, url, index));
     });
   }
@@ -40525,7 +40544,7 @@ ${galleryText}`;
   function taskSelectedOutputDownloadName(task) {
     const selectedUrls = taskSelectedOutputUrls(task);
     if (selectedUrls.length === 1) {
-      const outputUrls = taskOutputUrls3(task);
+      const outputUrls = taskOutputUrls4(task);
       const index = Math.max(0, outputUrls.indexOf(selectedUrls[0]));
       return outputDownloadFilename(task, selectedUrls[0], index);
     }
@@ -40556,7 +40575,7 @@ ${galleryText}`;
     const taskId = button.dataset.deleteUnselectedTaskId || state29.previewTask?.task_id || state29.selectedTaskId || "";
     const task = state29.tasks.find((item) => String(item.task_id) === String(taskId)) || state29.previewTask;
     const selectedCount = taskSelectedOutputUrls(task).length;
-    const totalCount = taskOutputUrls3(task).length;
+    const totalCount = taskOutputUrls4(task).length;
     const deleteCount = Math.max(0, totalCount - selectedCount);
     if (!task?.task_id || selectedCount <= 0 || deleteCount <= 0) {
       setStatus21(translate("preview.noUnselectedOutputs"), "error");
@@ -40584,7 +40603,7 @@ ${galleryText}`;
       const updatedTask = data.task;
       updateTaskInState3(updatedTask);
       state29.selectedTaskId = updatedTask.task_id;
-      renderTasks7();
+      renderTasks8();
       renderPreview5(updatedTask);
       setStatus21(translate("preview.deleteUnselectedDone"), "ok");
     } catch (error) {
@@ -40820,7 +40839,7 @@ ${galleryText}`;
   }
   var updateTaskInState4 = (...args) => legacyMethod39("updateTaskInState", ...args);
   var cleanupSessionSelections2 = (...args) => legacyMethod39("cleanupSessionSelections", ...args);
-  var renderTasks8 = (...args) => legacyMethod39("renderTasks", ...args);
+  var renderTasks9 = (...args) => legacyMethod39("renderTasks", ...args);
   var renderArchiveButton4 = (...args) => legacyMethod39("renderArchiveButton", ...args);
   var renderArchiveModal4 = (...args) => legacyMethod39("renderArchiveModal", ...args);
   var renderPreview6 = (...args) => legacyMethod39("renderPreview", ...args);
@@ -40855,7 +40874,7 @@ ${galleryText}`;
       if (requestSeq !== state30.tasksRequestSeq) return;
     }
     cleanupSessionSelections2();
-    renderTasks8();
+    renderTasks9();
     renderArchiveButton4();
     renderArchiveModal4();
     await renderSelectedTaskPreview(requestSeq);
@@ -40866,7 +40885,7 @@ ${galleryText}`;
       void markTaskViewed2(task.task_id);
     }
     cleanupSessionSelections2();
-    renderTasks8();
+    renderTasks9();
     renderArchiveButton4();
     renderArchiveModal4();
     await renderSelectedTaskPreview();
@@ -40957,7 +40976,7 @@ ${galleryText}`;
     if (!response.ok) throw new Error(data.detail || "Task history search failed");
     if (requestSeq !== state30.taskSearchHistoryRequestSeq || currentTaskSearchQuery() !== query) return;
     mergeTaskSearchHistoryResults(Array.isArray(data.tasks) ? data.tasks : []);
-    renderTasks8({ preserveScroll: true });
+    renderTasks9({ preserveScroll: true });
   }
   async function syncTaskSearchHistoryResults2() {
     window.clearTimeout(taskSearchHistoryTimerId);
@@ -40965,7 +40984,7 @@ ${galleryText}`;
     const requestSeq = ++state30.taskSearchHistoryRequestSeq;
     if (!query) {
       clearTaskSearchHistoryResults();
-      renderTasks8({ preserveScroll: true });
+      renderTasks9({ preserveScroll: true });
       return;
     }
     taskSearchHistoryTimerId = window.setTimeout(() => {
@@ -41704,7 +41723,7 @@ ${galleryText}`;
   function renderImageStrip7() {
     legacyMethod42("renderImageStrip");
   }
-  function renderTasks9() {
+  function renderTasks10() {
     legacyMethod42("renderTasks");
   }
   function renderPreview8() {
@@ -42009,7 +42028,7 @@ ${galleryText}`;
     updateQuantity3();
     updateCompression3();
     renderImageStrip7();
-    renderTasks9();
+    renderTasks10();
     renderPreview8();
     updateRequestPreview13();
     setStatus23(translate("status.waiting"), "");

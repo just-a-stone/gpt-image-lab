@@ -10,6 +10,17 @@ function setStatus(msg: string, kind: string): void {
   if (typeof fn === "function") fn(msg, kind);
 }
 
+function renderTasks(): void {
+  const fn = getLegacyBridge().methods.renderTasks;
+  if (typeof fn === "function") fn();
+}
+
+function taskOutputUrls(task: any): string[] {
+  const fn = getLegacyBridge().methods.taskOutputUrls;
+  if (typeof fn === "function") return fn(task) || [];
+  return Array.isArray(task?.output_urls) ? task.output_urls : [];
+}
+
 function closePromptPopover(): void {
   const fn = getLegacyBridge().methods.closePromptPopover;
   if (typeof fn === "function") fn();
@@ -62,6 +73,10 @@ async function openShareDialog(button: HTMLElement, taskId: string): Promise<voi
     setStatus(translate("share.onlyCompleted"), "error");
     return;
   }
+  if (taskOutputUrls(task).length === 0) {
+    setStatus(translate("share.noOutput"), "error");
+    return;
+  }
 
   closePromptPopover();
 
@@ -81,6 +96,8 @@ async function openShareDialog(button: HTMLElement, taskId: string): Promise<voi
       onConfirm: async () => {
         try {
           await unshareTask(taskId);
+          task.shared_at = null;
+          renderTasks();
           setStatus(translate("share.revoked"), "ok");
         } catch (err) {
           setStatus(err instanceof Error ? err.message : translate("share.revokeFailed"), "error");
@@ -166,8 +183,10 @@ async function openShareDialog(button: HTMLElement, taskId: string): Promise<voi
     confirmBtn.disabled = true;
     try {
       await shareTask(taskId, promptCheckbox.checked, noteInput.value.trim());
-      dialog.remove();
-      setStatus(translate("share.shared"), "ok");
+        task.shared_at = new Date().toISOString();
+        renderTasks();
+        dialog.remove();
+        setStatus(translate("share.shared"), "ok");
     } catch (err) {
       confirmBtn.disabled = false;
       setStatus(err instanceof Error ? err.message : translate("share.createFailed"), "error");

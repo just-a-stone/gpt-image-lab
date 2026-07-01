@@ -906,6 +906,7 @@ export const EN_DICTIONARY: TranslationDictionary = {
     "share.revoked": "Share revoked",
     "share.revokeFailed": "Failed to revoke share",
     "share.onlyCompleted": "Only completed tasks can be shared",
+    "share.noOutput": "Task failed with no output, cannot be shared",
     "share.statusFailed": "Failed to check share status",
     "share.exploreLink": "Explore"
 };

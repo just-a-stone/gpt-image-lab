@@ -906,6 +906,7 @@ export const ZH_CN_DICTIONARY: TranslationDictionary = {
     "share.revoked": "已取消分享",
     "share.revokeFailed": "取消分享失败",
     "share.onlyCompleted": "只能分享已完成的任务",
+    "share.noOutput": "生成任务失败，不可分享",
     "share.statusFailed": "获取分享状态失败",
     "share.exploreLink": "探索"
 };
