@@ -906,6 +906,7 @@
     "share.revoked": "Share revoked",
     "share.revokeFailed": "Failed to revoke share",
     "share.onlyCompleted": "Only completed tasks can be shared",
+    "share.noOutput": "Task failed with no output, cannot be shared",
     "share.statusFailed": "Failed to check share status",
     "share.exploreLink": "Explore"
   };
@@ -9854,6 +9855,7 @@
     "share.revoked": "\u5DF2\u53D6\u6D88\u5206\u4EAB",
     "share.revokeFailed": "\u53D6\u6D88\u5206\u4EAB\u5931\u8D25",
     "share.onlyCompleted": "\u53EA\u80FD\u5206\u4EAB\u5DF2\u5B8C\u6210\u7684\u4EFB\u52A1",
+    "share.noOutput": "\u751F\u6210\u4EFB\u52A1\u5931\u8D25\uFF0C\u4E0D\u53EF\u5206\u4EAB",
     "share.statusFailed": "\u83B7\u53D6\u5206\u4EAB\u72B6\u6001\u5931\u8D25",
     "share.exploreLink": "\u63A2\u7D22"
   };
