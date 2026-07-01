@@ -35528,7 +35528,8 @@ ${galleryText}`;
     const shareLabel = escapeHtml13(translate("share.button"));
     const task = state19.tasks.find((t) => String(t.task_id) === taskId);
     const isShared = Boolean(task?.shared_at);
-    const shareButton = isShared ? "" : `
+    const hasOutput = taskOutputUrls(task).length > 0;
+    const shareButton = isShared || !hasOutput ? "" : `
         <button class="task-share-button" type="button" data-share-task-id="${taskId}" aria-label="${shareLabel}" title="${shareLabel}">
           <svg class="task-action-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
             <circle cx="6" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
