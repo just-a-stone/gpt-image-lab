@@ -1,5 +1,6 @@
 import { getLegacyBridge } from "./state";
 import { translate } from "./i18n";
+import { isByokActive, getByokCreds } from "./byok";
 
 const bridge = getLegacyBridge();
 const state = bridge.state;
@@ -155,11 +156,23 @@ async function retryFailedTask(taskId: any) {
     setStatus(translate("taskActions.noRetryableFailedImages"), "error");
     return;
   }
+  if (!isByokActive()) {
+    setStatus("请先在「🔑 自带Key」中填入 API Key", "error");
+    document.getElementById("byokPopover")?.classList.remove("hidden");
+    (document.getElementById("byokApiKeyInput") as HTMLInputElement | null)?.focus();
+    return;
+  }
+  const byok = getByokCreds();
   try {
     const response = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/retry-failed`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ api_provider_id: currentApiProviderId() }),
+      body: JSON.stringify({
+        api_provider_id: currentApiProviderId(),
+        byok_api_key: byok?.apiKey.trim() || "",
+        byok_base_url: byok?.baseUrl.trim() || "",
+        byok_image_model: byok?.imageModel.trim() || "",
+      }),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new TaskActionHttpError(data.detail || translate("taskActions.retryFailedOutputsFailed"), response.status);

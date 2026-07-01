@@ -318,7 +318,28 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
         metadata["retry_failed_slots"] = retry_slots
         metadata["retry_requested_at"] = now
         metadata["error"] = ""
-        h["apply_retry_api_provider"](task_id, metadata, str((payload or {}).get("api_provider_id") or "").strip() or None)
+        payload_dict = payload or {}
+        byok_api_key = str(payload_dict.get("byok_api_key") or "").strip()
+        if byok_api_key:
+            byok_base_url = str(payload_dict.get("byok_base_url") or "").strip()
+            byok_image_model = str(payload_dict.get("byok_image_model") or "").strip()
+            ctx.byok_keys[task_id] = byok_api_key
+            params = dict(metadata.get("params") or {})
+            params["api_provider_id"] = "byok"
+            params["api_provider_name"] = "BYOK"
+            if byok_base_url:
+                params["byok_base_url"] = byok_base_url
+            else:
+                params.pop("byok_base_url", None)
+            if byok_image_model:
+                params["byok_image_model"] = byok_image_model
+            else:
+                params.pop("byok_image_model", None)
+            metadata["params"] = params
+            metadata["api_provider_id"] = "byok"
+            metadata["api_provider_name"] = "BYOK"
+        else:
+            h["apply_retry_api_provider"](task_id, metadata, str(payload_dict.get("api_provider_id") or "").strip() or None)
         ctx.storage.write_metadata(task_id, metadata)
         if ctx.queue_manager is not None:
             ctx.queue_manager.attempts.pop(task_id, None)

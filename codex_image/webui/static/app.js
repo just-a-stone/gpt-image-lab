@@ -36908,11 +36908,23 @@ ${galleryText}`;
       setStatus16(translate("taskActions.noRetryableFailedImages"), "error");
       return;
     }
+    if (!isByokActive()) {
+      setStatus16("\u8BF7\u5148\u5728\u300C\u{1F511} \u81EA\u5E26Key\u300D\u4E2D\u586B\u5165 API Key", "error");
+      document.getElementById("byokPopover")?.classList.remove("hidden");
+      document.getElementById("byokApiKeyInput")?.focus();
+      return;
+    }
+    const byok = getByokCreds();
     try {
       const response = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/retry-failed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api_provider_id: currentApiProviderId2() })
+        body: JSON.stringify({
+          api_provider_id: currentApiProviderId2(),
+          byok_api_key: byok?.apiKey.trim() || "",
+          byok_base_url: byok?.baseUrl.trim() || "",
+          byok_image_model: byok?.imageModel.trim() || ""
+        })
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new TaskActionHttpError(data.detail || translate("taskActions.retryFailedOutputsFailed"), response.status);

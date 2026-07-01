@@ -43,6 +43,31 @@ class CapturingApiImageClient(FakeImageClient):
         self.instances.append(self)
 
 
+class ByokRetryCaptureClient(CapturingApiImageClient):
+    instances: list["ByokRetryCaptureClient"] = []
+
+    @classmethod
+    def reset(cls) -> None:
+        cls.instances = []
+
+    def generate_image(self, **kwargs: Any):
+        from codex_image.client import ImageResult
+
+        self.generate_calls.append(kwargs)
+        call_number = len(self.generate_calls)
+        if call_number == 2:
+            raise RuntimeError("temporary server failure")
+        return ImageResult(
+            f"byok-{self.base_url}-{call_number}".encode("utf-8"),
+            f"byok revised {call_number}",
+            "png",
+            kwargs["size"],
+            "auto",
+            kwargs["quality"],
+            {"call": call_number},
+        )
+
+
 class ConcurrentApiImageClient(CapturingApiImageClient):
     instances: list["ConcurrentApiImageClient"] = []
     release_after_active_requests: int | None = None

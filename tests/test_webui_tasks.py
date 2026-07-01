@@ -29,6 +29,7 @@ from tests.webui_helpers import (
     CapturingApiImageClient,
     CapturingApiResponsesImageClient,
     ConcurrentApiImageClient,
+    ByokRetryCaptureClient,
     FailFastSlowCompleteQueueTestExecutor,
     FailsSecondImageClient,
     FakeImageClient,
@@ -1144,6 +1145,75 @@ class WebUITaskTests(unittest.TestCase):
             [(1, "completed"), (2, "completed"), (3, "completed"), (4, "completed")],
         )
         self.assertEqual(output_files_exist, [True, True, True, True])
+    def test_retry_failed_outputs_use_page_byok_key(self) -> None:
+        from codex_image.webui.app import create_app
+
+        ByokRetryCaptureClient.reset()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with patch("codex_image.webui.auth_routing.OpenAIImagesImageClient", ByokRetryCaptureClient, create=True):
+                app = create_app(
+                    output_root=root / "tasks",
+                    auth_settings_path=root / "auth-settings.json",
+                    api_settings_path=root / "api-settings.json",
+                    batch_delay_seconds=0,
+                    auto_start_queue=False,
+                )
+                client = TestClient(app)
+                client.patch(
+                    "/api/api-settings",
+                    json={
+                        "base_url": "https://api.example.com/v1",
+                        "api_key": "should-not-be-used",
+                        "image_model": "gpt-image-2",
+                        "api_mode": "images",
+                    },
+                )
+                client.patch("/api/auth", json={"source": "api"})
+                created = client.post(
+                    "/api/generate",
+                    data={
+                        "prompt": "retry with byok",
+                        "size": "1024x1024",
+                        "quality": "low",
+                        "n": "2",
+                        "byok_api_key": "byok-secret-key",
+                        "byok_base_url": "https://byok.example.com/v1",
+                        "byok_image_model": "gpt-image-2",
+                    },
+                )
+                task_id = created.json()["task"]["task_id"]
+
+                asyncio.run(app.state.queue_manager.run_available_once())
+                partial = client.get(f"/api/tasks/{task_id}").json()["task"]
+                app.state.byok_keys.pop(task_id, None)
+
+                retry_response = client.post(
+                    f"/api/tasks/{task_id}/retry-failed",
+                    json={
+                        "byok_api_key": "byok-secret-key",
+                        "byok_base_url": "https://byok.example.com/v1",
+                        "byok_image_model": "gpt-image-2",
+                    },
+                )
+                queued = retry_response.json()["task"]
+
+                asyncio.run(app.state.queue_manager.run_available_once())
+                retried = client.get(f"/api/tasks/{task_id}").json()["task"]
+
+        self.assertEqual(partial["status"], "partial_failed")
+        self.assertEqual(retry_response.status_code, 200, retry_response.text)
+        self.assertEqual(queued["status"], "queued")
+        self.assertEqual(queued["params"]["api_provider_id"], "byok")
+        self.assertEqual(queued["params"]["byok_base_url"], "https://byok.example.com/v1")
+        self.assertEqual(queued["api_provider_id"], "byok")
+        self.assertEqual(retried["status"], "completed")
+        self.assertEqual(retried["failed_count"], 0)
+        self.assertGreaterEqual(len(ByokRetryCaptureClient.instances), 2)
+        retry_client = ByokRetryCaptureClient.instances[-1]
+        self.assertEqual(retry_client.api_key, "byok-secret-key")
+        self.assertEqual(retry_client.base_url, "https://byok.example.com/v1")
+        self.assertNotIn("should-not-be-used", [instance.api_key for instance in ByokRetryCaptureClient.instances])
     def test_retry_failed_outputs_allows_partial_generic_invalid_request(self) -> None:
         from codex_image.webui.app import create_app
 
