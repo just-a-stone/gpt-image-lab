@@ -634,12 +634,11 @@
 .task-card-actions {
   position: absolute;
   right: 8px;
-  top: 50%;
+  bottom: 6px;
   display: inline-flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
-  transform: translateY(-50%);
+  gap: 3px;
   opacity: 0;
   pointer-events: none;
   z-index: 2;
@@ -647,11 +646,12 @@
 }
 
 .task-archive-button,
-.task-delete-button {
+.task-delete-button,
+.task-share-button {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   border-radius: 50%;
   cursor: pointer;
@@ -659,15 +659,38 @@
 }
 
 .task-archive-button {
-  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 82%, var(--text-secondary));
   background: var(--surface-soft);
-  color: var(--primary-strong);
+  color: var(--text-secondary);
+}
+
+.task-archive-button:hover {
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  border-color: var(--primary);
 }
 
 .task-delete-button {
   border: 1px solid color-mix(in srgb, var(--line) 82%, var(--text-secondary));
   background: var(--surface-soft);
   color: var(--text-secondary);
+}
+
+.task-delete-button:hover {
+  background: color-mix(in srgb, var(--destructive, #ef4444) 15%, transparent);
+  border-color: var(--destructive, #ef4444);
+  color: var(--destructive, #ef4444);
+}
+
+.task-share-button {
+  border: 1px solid color-mix(in srgb, var(--line) 82%, var(--text-secondary));
+  background: var(--surface-soft);
+  color: var(--text-secondary);
+}
+
+.task-share-button:hover {
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .task-select-button {
