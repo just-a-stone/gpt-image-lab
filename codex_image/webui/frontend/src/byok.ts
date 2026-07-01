@@ -3,6 +3,8 @@ import { getLegacyBridge } from "./state";
 const BYOK_STORAGE_KEY = "ilab_byok_creds";
 const DEFAULT_BYOK_BASE_URL = "https://image.feiyang.click/v1";
 
+let byokBaseUrlLocked = false;
+
 export interface ByokCreds {
   apiKey: string;
   baseUrl: string;
@@ -90,6 +92,28 @@ function updateByokIndicator(): void {
   button.textContent = isByokActive() ? "🔑 自带Key · 已启用" : "🔑 自带Key";
 }
 
+function applyBaseUrlLock(baseUrlInput: HTMLInputElement): void {
+  const locked = byokBaseUrlLocked;
+  baseUrlInput.disabled = locked;
+  baseUrlInput.readOnly = locked;
+  baseUrlInput.classList.toggle("locked", locked);
+  if (locked) baseUrlInput.value = DEFAULT_BYOK_BASE_URL;
+  baseUrlInput.title = locked ? "Base URL 已由管理员锁定" : "";
+}
+
+async function syncByokBaseUrlLock(): Promise<void> {
+  try {
+    const resp = await fetch("/api/health");
+    if (!resp.ok) return;
+    const data = await resp.json();
+    byokBaseUrlLocked = Boolean(data?.byok_base_url_locked);
+  } catch {
+    byokBaseUrlLocked = false;
+  }
+  const baseUrlInput = document.getElementById("byokBaseUrlInput") as HTMLInputElement | null;
+  if (baseUrlInput) applyBaseUrlLock(baseUrlInput);
+}
+
 function bindByokPopover(): void {
   const popover = document.getElementById("byokPopover");
   const keyInput = document.getElementById("byokApiKeyInput") as HTMLInputElement | null;
@@ -103,15 +127,16 @@ function bindByokPopover(): void {
 
   const creds = getByokCreds();
   keyInput.value = creds?.apiKey || "";
-  baseUrlInput.value = creds?.baseUrl || DEFAULT_BYOK_BASE_URL;
+  baseUrlInput.value = (byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : creds?.baseUrl) || DEFAULT_BYOK_BASE_URL;
   modelInput.value = creds?.imageModel || "";
   enabledToggle.checked = true;
   enabledToggle.disabled = true;
+  applyBaseUrlLock(baseUrlInput);
 
   const persist = (): void => {
     saveByokCreds({
       apiKey: keyInput.value.trim(),
-      baseUrl: baseUrlInput.value.trim(),
+      baseUrl: byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : baseUrlInput.value.trim(),
       imageModel: modelInput.value.trim(),
       enabled: true,
     });
@@ -195,4 +220,5 @@ export function initByokFeature(): void {
     refreshByokRunButton: refreshRunButton,
   });
   refreshRunButton();
+  void syncByokBaseUrlLock();
 }

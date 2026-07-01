@@ -11599,6 +11599,14 @@ body.history-lightbox-open {
   border-color: var(--primary);
 }
 
+.byok-field input.locked,
+.byok-field input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--surface-soft);
+  color: var(--text-secondary);
+}
+
 .byok-checkbox {
   display: flex;
   align-items: center;

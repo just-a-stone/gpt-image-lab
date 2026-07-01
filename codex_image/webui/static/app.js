@@ -13299,6 +13299,7 @@
   // codex_image/webui/frontend/src/byok.ts
   var BYOK_STORAGE_KEY = "ilab_byok_creds";
   var DEFAULT_BYOK_BASE_URL = "https://image.feiyang.click/v1";
+  var byokBaseUrlLocked = false;
   function getByokCreds() {
     try {
       const raw = localStorage.getItem(BYOK_STORAGE_KEY);
@@ -13369,6 +13370,26 @@
     button.classList.toggle("active", isByokActive());
     button.textContent = isByokActive() ? "\u{1F511} \u81EA\u5E26Key \xB7 \u5DF2\u542F\u7528" : "\u{1F511} \u81EA\u5E26Key";
   }
+  function applyBaseUrlLock(baseUrlInput) {
+    const locked = byokBaseUrlLocked;
+    baseUrlInput.disabled = locked;
+    baseUrlInput.readOnly = locked;
+    baseUrlInput.classList.toggle("locked", locked);
+    if (locked) baseUrlInput.value = DEFAULT_BYOK_BASE_URL;
+    baseUrlInput.title = locked ? "Base URL \u5DF2\u7531\u7BA1\u7406\u5458\u9501\u5B9A" : "";
+  }
+  async function syncByokBaseUrlLock() {
+    try {
+      const resp = await fetch("/api/health");
+      if (!resp.ok) return;
+      const data = await resp.json();
+      byokBaseUrlLocked = Boolean(data?.byok_base_url_locked);
+    } catch {
+      byokBaseUrlLocked = false;
+    }
+    const baseUrlInput = document.getElementById("byokBaseUrlInput");
+    if (baseUrlInput) applyBaseUrlLock(baseUrlInput);
+  }
   function bindByokPopover() {
     const popover = document.getElementById("byokPopover");
     const keyInput = document.getElementById("byokApiKeyInput");
@@ -13381,14 +13402,15 @@
     if (!popover || !keyInput || !baseUrlInput || !modelInput || !enabledToggle || !saveButton || !clearButton || !closeButton) return;
     const creds = getByokCreds();
     keyInput.value = creds?.apiKey || "";
-    baseUrlInput.value = creds?.baseUrl || DEFAULT_BYOK_BASE_URL;
+    baseUrlInput.value = (byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : creds?.baseUrl) || DEFAULT_BYOK_BASE_URL;
     modelInput.value = creds?.imageModel || "";
     enabledToggle.checked = true;
     enabledToggle.disabled = true;
+    applyBaseUrlLock(baseUrlInput);
     const persist = () => {
       saveByokCreds({
         apiKey: keyInput.value.trim(),
-        baseUrl: baseUrlInput.value.trim(),
+        baseUrl: byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : baseUrlInput.value.trim(),
         imageModel: modelInput.value.trim(),
         enabled: true
       });
@@ -13466,6 +13488,7 @@
       refreshByokRunButton: refreshRunButton
     });
     refreshRunButton();
+    void syncByokBaseUrlLock();
   }
 
   // node_modules/konva/lib/Global.js

@@ -15,3 +15,7 @@ def deletion_disabled() -> bool:
 def ensure_deletion_allowed() -> None:
     if deletion_disabled():
         raise HTTPException(status_code=403, detail=DELETION_DISABLED_MESSAGE)
+
+
+def byok_base_url_locked() -> bool:
+    return os.environ.get("WEBUI_LOCK_BYOK_BASE_URL", "").strip().lower() in _TRUTHY
