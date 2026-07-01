@@ -45,7 +45,7 @@ async function fetchShareStatus(taskId: string): Promise<ShareInfo> {
   return await res.json().catch(() => ({ shared: false }));
 }
 
-async function shareTask(taskId: string, showPrompt: boolean, shareNote: string): Promise<boolean> {
+async function shareTask(taskId: string, showPrompt: boolean, shareNote: string): Promise<string | null> {
   const res = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/share`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -55,7 +55,8 @@ async function shareTask(taskId: string, showPrompt: boolean, shareNote: string)
     const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || translate("share.createFailed"));
   }
-  return true;
+  const data = await res.json().catch(() => ({}));
+  return data?.share?.shared_at ? String(data.share.shared_at) : null;
 }
 
 async function unshareTask(taskId: string): Promise<void> {
@@ -182,8 +183,8 @@ async function openShareDialog(button: HTMLElement, taskId: string): Promise<voi
   confirmBtn.addEventListener("click", async () => {
     confirmBtn.disabled = true;
     try {
-      await shareTask(taskId, promptCheckbox.checked, noteInput.value.trim());
-        task.shared_at = new Date().toISOString();
+      const sharedAt = await shareTask(taskId, promptCheckbox.checked, noteInput.value.trim());
+        task.shared_at = sharedAt || new Date().toISOString();
         renderTasks();
         dialog.remove();
         setStatus(translate("share.shared"), "ok");

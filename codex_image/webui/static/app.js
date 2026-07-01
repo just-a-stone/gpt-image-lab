@@ -35795,6 +35795,7 @@ ${galleryText}`;
         task.updated_at,
         task.completed_at,
         task.started_at,
+        task.shared_at,
         task.prompt,
         task.mode,
         task.backend,
@@ -37094,10 +37095,11 @@ ${galleryText}`;
       body: JSON.stringify({ show_prompt: showPrompt, share_note: shareNote })
     });
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.detail || translate("share.createFailed"));
+      const data2 = await res.json().catch(() => ({}));
+      throw new Error(data2.detail || translate("share.createFailed"));
     }
-    return true;
+    const data = await res.json().catch(() => ({}));
+    return data?.share?.shared_at ? String(data.share.shared_at) : null;
   }
   async function unshareTask(taskId) {
     const res = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/share`, { method: "DELETE" });
@@ -37210,8 +37212,8 @@ ${galleryText}`;
     confirmBtn.addEventListener("click", async () => {
       confirmBtn.disabled = true;
       try {
-        await shareTask(taskId, promptCheckbox.checked, noteInput.value.trim());
-        task.shared_at = (/* @__PURE__ */ new Date()).toISOString();
+        const sharedAt = await shareTask(taskId, promptCheckbox.checked, noteInput.value.trim());
+        task.shared_at = sharedAt || (/* @__PURE__ */ new Date()).toISOString();
         renderTasks6();
         dialog.remove();
         setStatus17(translate("share.shared"), "ok");

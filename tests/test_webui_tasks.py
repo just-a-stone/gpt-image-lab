@@ -201,6 +201,69 @@ class WebUITaskTests(unittest.TestCase):
         self.assertNotIn("prompt_for_model", task)
         self.assertNotIn("request", task)
 
+    def test_active_shared_task_map_returns_iso_timestamps(self) -> None:
+        from codex_image.webui.share_store import ShareStore
+
+        with tempfile.TemporaryDirectory() as tmp:
+            store = ShareStore(Path(tmp) / "shares.db")
+            store.create_share(task_id="t1", owner="owner-1")
+            store.create_share(task_id="t2", owner="owner-1")
+            store.create_share(task_id="t3", owner="owner-2")
+            mapping = store.active_shared_task_map("owner-1")
+            ids = store.active_shared_task_ids("owner-1")
+            revoked = store.revoke_share(task_id="t1", owner="owner-1")
+            after_revoke = store.active_shared_task_map("owner-1")
+
+        self.assertEqual(set(mapping.keys()), {"t1", "t2"})
+        for value in mapping.values():
+            self.assertIsInstance(value, str)
+            self.assertTrue(value.endswith("Z"))
+        self.assertEqual(mapping.keys(), ids)
+        self.assertTrue(revoked)
+        self.assertEqual(set(after_revoke.keys()), {"t2"})
+
+    def test_recent_tasks_api_includes_shared_at_iso_string(self) -> None:
+        from codex_image.webui.app import create_app
+        from codex_image.webui.share_store import ShareStore
+        from codex_image.webui.storage import TaskStorage
+
+        task_id = "20260510101010-eeeeeeee"
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            app = create_app(output_root=root, auth_checker=lambda: True, auto_start_queue=False)
+            storage = TaskStorage(root, input_root=root / "inputs", source_data_root=root / "source-data")
+            storage.write_metadata(
+                task_id,
+                {
+                    "task_id": task_id,
+                    "created_at": "2026-05-10T10:10:10+00:00",
+                    "updated_at": "2026-05-10T10:11:10+00:00",
+                    "status": "completed",
+                    "mode": "edit",
+                    "prompt": "shared card prompt",
+                    "params": {"size": "1024x1024", "n": 1},
+                    "outputs": [
+                        {"index": 1, "status": "completed", "url": output_url(task_id, 1), "thumbnail_url": "/thumb-1.jpg"},
+                    ],
+                    "generated_count": 1,
+                    "failed_count": 0,
+                    "total_count": 1,
+                },
+            )
+            share = ShareStore(storage.task_index.path).create_share(task_id=task_id, owner="")
+            client = TestClient(app)
+            shared_response = client.get("/api/tasks/recent", params={"limit": 10}).json()
+            ShareStore(storage.task_index.path).revoke_share(task_id=task_id, owner="")
+            revoked_response = client.get("/api/tasks/recent", params={"limit": 10}).json()
+
+        shared_task = next(t for t in shared_response["tasks"] if t["task_id"] == task_id)
+        self.assertEqual(shared_task["shared_at"], share["shared_at"])
+        self.assertIsInstance(shared_task["shared_at"], str)
+        self.assertTrue(shared_task["shared_at"].endswith("Z"))
+        revoked_task = next(t for t in revoked_response["tasks"] if t["task_id"] == task_id)
+        self.assertNotIn("shared_at", revoked_task)
+
+
     def test_recent_tasks_api_falls_back_to_requested_size_when_output_size_is_numeric(self) -> None:
         from codex_image.webui.app import create_app
 

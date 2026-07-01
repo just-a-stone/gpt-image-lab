@@ -53,12 +53,12 @@ def queue_snapshot(ctx: WebUIContext, *, owner: str | None = None) -> dict[str, 
 
 def event_snapshot(ctx: WebUIContext, *, owner: str | None = None) -> dict[str, Any]:
     tasks = ctx.storage.list_recent_task_cards(limit=200, owner=owner)
-    share_store = ShareStore(ctx.storage.task_index.path)
-    shared_ids = share_store.active_shared_task_ids(owner or "")
-    if shared_ids:
+    shared_map = ShareStore(ctx.storage.task_index.path).active_shared_task_map(owner or "")
+    if shared_map:
         for task in tasks:
-            if str(task.get("task_id") or "") in shared_ids:
-                task["shared_at"] = True
+            shared_at = shared_map.get(str(task.get("task_id") or ""))
+            if shared_at:
+                task["shared_at"] = shared_at
     return {
         "type": "snapshot",
         "tasks": tasks,
@@ -98,9 +98,9 @@ def task_event(ctx: WebUIContext, task_id: str, *, owner: str | None = None) -> 
         include_request=False,
     )
     if owner is not None:
-        share_store = ShareStore(ctx.storage.task_index.path)
-        if task_id in share_store.active_shared_task_ids(owner or ""):
-            task["shared_at"] = True
+        shared_at = ShareStore(ctx.storage.task_index.path).active_shared_task_map(owner or "").get(task_id)
+        if shared_at:
+            task["shared_at"] = shared_at
     return {
         "type": "task",
         "task": task,

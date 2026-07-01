@@ -224,6 +224,14 @@ class ShareStore:
             ).fetchall()
         return {str(row["task_id"]) for row in rows}
 
+    def active_shared_task_map(self, owner: str) -> dict[str, str]:
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                "select task_id, shared_at from shared_tasks where owner = ? and status = ?",
+                (owner, SHARE_STATUS_ACTIVE),
+            ).fetchall()
+        return {str(row["task_id"]): str(row["shared_at"]) for row in rows}
+
     def cleanup_for_task(self, task_id: str) -> None:
         with closing(self._connect()) as connection:
             with connection:

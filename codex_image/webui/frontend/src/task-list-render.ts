@@ -940,6 +940,7 @@ function taskListRenderKey(tasks: any, query: any, layout: any = {}, filters: an
       task.updated_at,
       task.completed_at,
       task.started_at,
+      task.shared_at,
       task.prompt,
       task.mode,
       task.backend,

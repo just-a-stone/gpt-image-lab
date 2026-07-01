@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from codex_image.webui.context import WebUIContext
 from codex_image.webui.feature_flags import ensure_deletion_allowed
 from codex_image.webui.owner import resolve_owner
+from codex_image.webui.share_store import ShareStore
 from codex_image.webui.storage import utc_now
 from codex_image.webui.task_metadata import (
     _accept_partial_task_successes,
@@ -75,6 +76,12 @@ def register_task_routes(app: FastAPI, ctx: WebUIContext) -> None:
             task = ctx.storage.task_sidebar_card(task_id)
             tasks_by_id[task_id] = task
             tasks.append(task)
+        shared_map = ShareStore(ctx.storage.task_index.path).active_shared_task_map(owner)
+        if shared_map:
+            for task in tasks:
+                shared_at = shared_map.get(str(task.get("task_id") or ""))
+                if shared_at:
+                    task["shared_at"] = shared_at
         return {"tasks": tasks}
 
     @app.get("/api/task-history/summary")
