@@ -131,7 +131,7 @@ async function triggerLogin(silent = false): Promise<void> {
   const base = document.documentElement.getAttribute("data-newapi-base-url");
   if (base) {
     const returnUrl = window.location.origin + window.location.pathname;
-    window.open(`${base}/login?redirect=${encodeURIComponent(returnUrl)}`, "_blank", "noopener");
+    window.open(`${base}/sign-in?redirect=${encodeURIComponent(returnUrl)}`, "_blank", "noopener");
   }
 }
 
