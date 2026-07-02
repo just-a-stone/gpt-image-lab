@@ -13581,6 +13581,7 @@
           await triggerLogin(true);
         } else {
           persistActive(true, data.username);
+          ssoTabOpened = false;
         }
       } else {
         persistActive(false, "");
@@ -13603,6 +13604,7 @@
           void syncSession();
         }
         persistActive(true, username);
+        ssoTabOpened = false;
         updateIndicator();
         renderStatusIndicator();
         refreshRunButton2();
@@ -13618,8 +13620,8 @@
     }
     const base = document.documentElement.getAttribute("data-newapi-base-url");
     if (base) {
-      const returnUrl = window.location.origin + window.location.pathname;
-      window.open(`${base}/sign-in?redirect=${encodeURIComponent(returnUrl)}`, "_blank", "noopener");
+      ssoTabOpened = true;
+      window.open(`${base}/sign-in`, "_blank", "noopener");
     }
   }
   async function triggerLogout() {
@@ -13658,6 +13660,7 @@
     switcher.appendChild(button);
     updateIndicator();
   }
+  var ssoTabOpened = false;
   async function initNewapiSsoFeature() {
     injectButton();
     if (localStorage.getItem(NEWAPI_ACTIVE_KEY) === "1") {
@@ -13684,6 +13687,16 @@
     }
     await refreshNewapiStatus();
     Object.assign(getLegacyBridge().methods, { isNewapiActive, refreshNewapiStatus });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && ssoTabOpened && !newapiActive) {
+        void refreshNewapiStatus();
+      }
+    });
+    window.addEventListener("focus", () => {
+      if (ssoTabOpened && !newapiActive) {
+        void refreshNewapiStatus();
+      }
+    });
   }
 
   // node_modules/konva/lib/Global.js

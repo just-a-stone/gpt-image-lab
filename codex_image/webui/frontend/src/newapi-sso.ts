@@ -91,6 +91,7 @@ export async function refreshNewapiStatus(): Promise<void> {
         await triggerLogin(true);
       } else {
         persistActive(true, data.username);
+        ssoTabOpened = false;
       }
     } else {
       persistActive(false, "");
@@ -114,6 +115,7 @@ async function triggerLogin(silent = false): Promise<void> {
         void syncSession();
       }
       persistActive(true, username);
+      ssoTabOpened = false;
       updateIndicator();
       renderStatusIndicator();
       refreshRunButton();
@@ -130,8 +132,8 @@ async function triggerLogin(silent = false): Promise<void> {
   }
   const base = document.documentElement.getAttribute("data-newapi-base-url");
   if (base) {
-    const returnUrl = window.location.origin + window.location.pathname;
-    window.open(`${base}/sign-in?redirect=${encodeURIComponent(returnUrl)}`, "_blank", "noopener");
+    ssoTabOpened = true;
+    window.open(`${base}/sign-in`, "_blank", "noopener");
   }
 }
 
@@ -175,6 +177,8 @@ function injectButton(): void {
   updateIndicator();
 }
 
+let ssoTabOpened = false;
+
 export async function initNewapiSsoFeature(): Promise<void> {
   injectButton();
   // Restore from localStorage for a snappy first paint before the network check.
@@ -202,4 +206,16 @@ export async function initNewapiSsoFeature(): Promise<void> {
   }
   await refreshNewapiStatus();
   Object.assign(getLegacyBridge().methods, { isNewapiActive, refreshNewapiStatus });
+
+  // When the user returns to this tab after logging in on new-api, auto-refresh SSO.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && ssoTabOpened && !newapiActive) {
+      void refreshNewapiStatus();
+    }
+  });
+  window.addEventListener("focus", () => {
+    if (ssoTabOpened && !newapiActive) {
+      void refreshNewapiStatus();
+    }
+  });
 }
