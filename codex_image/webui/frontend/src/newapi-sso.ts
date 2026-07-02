@@ -1,4 +1,5 @@
 import { getLegacyBridge } from "./state";
+import { clearByokCreds, clearSession, getByokCreds, saveByokFromNewapi, syncSession } from "./byok";
 
 const NEWAPI_ACTIVE_KEY = "ilab_newapi_active";
 const NEWAPI_USERNAME_KEY = "ilab_newapi_username";
@@ -82,9 +83,15 @@ export async function refreshNewapiStatus(): Promise<void> {
       return;
     }
     const data = await resp.json();
-    if (data?.ok) {
-      const username = String(data.username || localStorage.getItem(NEWAPI_USERNAME_KEY) || "");
-      persistActive(true, username);
+    if (data?.ok && data.username) {
+      const creds = getByokCreds();
+      const stored = localStorage.getItem(NEWAPI_USERNAME_KEY);
+      if (!creds || (creds.authSource === "newapi" && (!creds.apiKey || stored !== data.username))) {
+        persistActive(false, data.username);
+        await triggerLogin(true);
+      } else {
+        persistActive(true, data.username);
+      }
     } else {
       persistActive(false, "");
     }
@@ -96,12 +103,16 @@ export async function refreshNewapiStatus(): Promise<void> {
   refreshRunButton();
 }
 
-async function triggerLogin(): Promise<void> {
+async function triggerLogin(silent = false): Promise<void> {
   try {
     const resp = await fetch("/api/newapi/login", { method: "POST", credentials: "include" });
     if (resp.ok) {
       const data = await resp.json();
       const username = String(data.username || "");
+      if (data.byok) {
+        saveByokFromNewapi(data.byok.api_key, data.byok.base_url, data.byok.image_model);
+        void syncSession();
+      }
       persistActive(true, username);
       updateIndicator();
       renderStatusIndicator();
@@ -111,9 +122,12 @@ async function triggerLogin(): Promise<void> {
       return;
     }
   } catch {
-    // fall through to redirect
+    // fall through
   }
-  // Session cookie not shared yet: send the user to new-api to log in first.
+  if (silent) {
+    persistActive(false, "");
+    return;
+  }
   const base = document.documentElement.getAttribute("data-newapi-base-url");
   if (base) {
     const returnUrl = window.location.origin + window.location.pathname;
@@ -126,6 +140,11 @@ async function triggerLogout(): Promise<void> {
     await fetch("/api/newapi/logout", { method: "DELETE", credentials: "include" });
   } catch {
     // ignore
+  }
+  const creds = getByokCreds();
+  if (creds?.authSource === "newapi") {
+    clearByokCreds();
+    void clearSession();
   }
   persistActive(false, "");
   updateIndicator();

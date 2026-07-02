@@ -13311,7 +13311,8 @@
         apiKey: String(parsed.apiKey || ""),
         baseUrl: String(parsed.baseUrl || ""),
         imageModel: String(parsed.imageModel || ""),
-        enabled: Boolean(parsed.enabled)
+        enabled: Boolean(parsed.enabled),
+        authSource: parsed.authSource === "newapi" ? "newapi" : "manual"
       };
     } catch {
       return null;
@@ -13326,6 +13327,15 @@
   }
   function clearByokCreds() {
     localStorage.removeItem(BYOK_STORAGE_KEY);
+  }
+  function saveByokFromNewapi(apiKey, baseUrl, imageModel) {
+    saveByokCreds({
+      apiKey,
+      baseUrl: byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : baseUrl,
+      imageModel,
+      enabled: true,
+      authSource: "newapi"
+    });
   }
   function appendByokToForm(form) {
     if (!isByokActive()) return false;
@@ -13412,7 +13422,8 @@
         apiKey: keyInput.value.trim(),
         baseUrl: byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : baseUrlInput.value.trim(),
         imageModel: modelInput.value.trim(),
-        enabled: enabledToggle.checked
+        enabled: enabledToggle.checked,
+        authSource: "manual"
       });
       updateByokIndicator();
       refreshRunButton();
@@ -13562,9 +13573,15 @@
         return;
       }
       const data = await resp.json();
-      if (data?.ok) {
-        const username = String(data.username || localStorage.getItem(NEWAPI_USERNAME_KEY) || "");
-        persistActive(true, username);
+      if (data?.ok && data.username) {
+        const creds = getByokCreds();
+        const stored = localStorage.getItem(NEWAPI_USERNAME_KEY);
+        if (!creds || creds.authSource === "newapi" && (!creds.apiKey || stored !== data.username)) {
+          persistActive(false, data.username);
+          await triggerLogin(true);
+        } else {
+          persistActive(true, data.username);
+        }
       } else {
         persistActive(false, "");
       }
@@ -13575,12 +13592,16 @@
     renderStatusIndicator();
     refreshRunButton2();
   }
-  async function triggerLogin() {
+  async function triggerLogin(silent = false) {
     try {
       const resp = await fetch("/api/newapi/login", { method: "POST", credentials: "include" });
       if (resp.ok) {
         const data = await resp.json();
         const username = String(data.username || "");
+        if (data.byok) {
+          saveByokFromNewapi(data.byok.api_key, data.byok.base_url, data.byok.image_model);
+          void syncSession();
+        }
         persistActive(true, username);
         updateIndicator();
         renderStatusIndicator();
@@ -13590,6 +13611,10 @@
         return;
       }
     } catch {
+    }
+    if (silent) {
+      persistActive(false, "");
+      return;
     }
     const base = document.documentElement.getAttribute("data-newapi-base-url");
     if (base) {
@@ -13601,6 +13626,11 @@
     try {
       await fetch("/api/newapi/logout", { method: "DELETE", credentials: "include" });
     } catch {
+    }
+    const creds = getByokCreds();
+    if (creds?.authSource === "newapi") {
+      clearByokCreds();
+      void clearSession();
     }
     persistActive(false, "");
     updateIndicator();
@@ -29285,7 +29315,8 @@ ${hint}` : hint;
     updateModeSpecificSettings(selected);
   }
   function authSourceDetailText(auth) {
-    if (isNewapiActive()) {
+    const creds = getByokCreds();
+    if (creds?.authSource === "newapi" && isNewapiActive()) {
       const name = getNewapiUsername();
       return name ? `\u{1FA84} new-api \xB7 ${name}` : "\u{1FA84} new-api \xB7 \u5DF2\u767B\u5F55";
     }

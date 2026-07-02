@@ -10,6 +10,7 @@ export interface ByokCreds {
   baseUrl: string;
   imageModel: string;
   enabled: boolean;
+  authSource?: "manual" | "newapi";
 }
 
 export function getByokCreds(): ByokCreds | null {
@@ -23,6 +24,7 @@ export function getByokCreds(): ByokCreds | null {
       baseUrl: String(parsed.baseUrl || ""),
       imageModel: String(parsed.imageModel || ""),
       enabled: Boolean(parsed.enabled),
+      authSource: parsed.authSource === "newapi" ? "newapi" : "manual",
     };
   } catch {
     return null;
@@ -40,6 +42,16 @@ export function saveByokCreds(creds: ByokCreds): void {
 
 export function clearByokCreds(): void {
   localStorage.removeItem(BYOK_STORAGE_KEY);
+}
+
+export function saveByokFromNewapi(apiKey: string, baseUrl: string, imageModel: string): void {
+  saveByokCreds({
+    apiKey,
+    baseUrl: byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : baseUrl,
+    imageModel,
+    enabled: true,
+    authSource: "newapi",
+  });
 }
 
 export function appendByokToForm(form: FormData): boolean {
@@ -138,6 +150,7 @@ function bindByokPopover(): void {
       baseUrl: byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : baseUrlInput.value.trim(),
       imageModel: modelInput.value.trim(),
       enabled: enabledToggle.checked,
+      authSource: "manual",
     });
     updateByokIndicator();
     refreshRunButton();

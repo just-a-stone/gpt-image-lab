@@ -1,7 +1,7 @@
 import { getLegacyBridge } from "./state";
 import { updateModeSpecificSettings } from "./api-mode-settings";
 import { formatTranslation, translate } from "./i18n";
-import { isByokActive } from "./byok";
+import { getByokCreds, isByokActive } from "./byok";
 import { getNewapiUsername, isNewapiActive } from "./newapi-sso";
 
 const bridge = getLegacyBridge();
@@ -105,7 +105,8 @@ export function applyAuthSourceSelection(source: any): void {
 }
 
 export function authSourceDetailText(auth: any): string {
-  if (isNewapiActive()) {
+  const creds = getByokCreds();
+  if (creds?.authSource === "newapi" && isNewapiActive()) {
     const name = getNewapiUsername();
     return name ? `🪄 new-api · ${name}` : "🪄 new-api · 已登录";
   }
