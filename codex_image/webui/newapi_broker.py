@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import threading
 import urllib.error
 import urllib.request
 from typing import Any
@@ -148,27 +149,41 @@ def _fetch_token_key(session_cookie: str, user_id: int, token_id: int) -> str | 
     return None
 
 
+_token_locks: dict[int, threading.Lock] = {}
+_token_locks_guard = threading.Lock()
+
+
+def _user_token_lock(user_id: int) -> threading.Lock:
+    with _token_locks_guard:
+        lock = _token_locks.get(user_id)
+        if lock is None:
+            lock = threading.Lock()
+            _token_locks[user_id] = lock
+        return lock
+
+
 def ensure_api_token(session_cookie: str, user_id: int) -> str | None:
     """Find (by name+group) or create the dedicated WebUI token, return its key."""
-    name = feature_flags.newapi_token_name()
-    group = feature_flags.newapi_token_group()
+    with _user_token_lock(user_id):
+        name = feature_flags.newapi_token_name()
+        group = feature_flags.newapi_token_group()
 
-    def matches(item: dict[str, Any]) -> bool:
-        return str(item.get("name") or "") == name and str(item.get("group") or "") == group
+        def matches(item: dict[str, Any]) -> bool:
+            return str(item.get("name") or "") == name and str(item.get("group") or "") == group
 
-    tokens = _list_tokens(session_cookie, user_id)
-    token_id = None
-    for item in tokens:
-        if matches(item):
-            token_id = item.get("id")
-            break
-    if token_id is None:
-        _create_token(session_cookie, user_id, name, group)
         tokens = _list_tokens(session_cookie, user_id)
+        token_id = None
         for item in tokens:
             if matches(item):
                 token_id = item.get("id")
                 break
-    if token_id is None:
-        return None
-    return _fetch_token_key(session_cookie, user_id, int(token_id))
+        if token_id is None:
+            _create_token(session_cookie, user_id, name, group)
+            tokens = _list_tokens(session_cookie, user_id)
+            for item in tokens:
+                if matches(item):
+                    token_id = item.get("id")
+                    break
+        if token_id is None:
+            return None
+        return _fetch_token_key(session_cookie, user_id, int(token_id))

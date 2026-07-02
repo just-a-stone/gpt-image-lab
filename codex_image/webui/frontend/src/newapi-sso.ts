@@ -150,6 +150,7 @@ async function triggerLogout(): Promise<void> {
   updateIndicator();
   refreshRunButton();
   getLegacyBridge().methods.updateRequestPreview?.();
+  void getLegacyBridge().methods.refreshHealth?.();
 }
 
 function injectButton(): void {

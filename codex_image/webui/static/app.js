@@ -13636,6 +13636,7 @@
     updateIndicator();
     refreshRunButton2();
     getLegacyBridge().methods.updateRequestPreview?.();
+    void getLegacyBridge().methods.refreshHealth?.();
   }
   function injectButton() {
     const switcher = document.querySelector(".auth-source-switcher");
