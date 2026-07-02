@@ -149,6 +149,22 @@ def _fetch_token_key(session_cookie: str, user_id: int, token_id: int) -> str | 
     return None
 
 
+def _set_token_status(session_cookie: str, user_id: int, token_item: dict[str, Any], status: int) -> bool:
+    """PUT the full token object with a modified status. Returns True on success."""
+    body = dict(token_item)
+    body["status"] = status
+    base_url = feature_flags.newapi_base_url()
+    result = _http_json(
+        "PUT",
+        f"{base_url}/api/token/",
+        session_cookie=session_cookie,
+        user_id=user_id,
+        body=body,
+        timeout=feature_flags.newapi_request_timeout_seconds(),
+    )
+    return bool(result and result.get("success"))
+
+
 _token_locks: dict[int, threading.Lock] = {}
 _token_locks_guard = threading.Lock()
 
@@ -163,7 +179,10 @@ def _user_token_lock(user_id: int) -> threading.Lock:
 
 
 def ensure_api_token(session_cookie: str, user_id: int) -> str | None:
-    """Find (by name+group) or create the dedicated WebUI token, return its key."""
+    """Find (by name+group) or create the dedicated WebUI token, return its key.
+
+    Re-enables the token if it was disabled by a previous logout.
+    """
     with _user_token_lock(user_id):
         name = feature_flags.newapi_token_name()
         group = feature_flags.newapi_token_group()
@@ -176,6 +195,8 @@ def ensure_api_token(session_cookie: str, user_id: int) -> str | None:
         for item in tokens:
             if matches(item):
                 token_id = item.get("id")
+                if item.get("status") == 2:
+                    _set_token_status(session_cookie, user_id, item, 1)
                 break
         if token_id is None:
             _create_token(session_cookie, user_id, name, group)
@@ -187,3 +208,16 @@ def ensure_api_token(session_cookie: str, user_id: int) -> str | None:
         if token_id is None:
             return None
         return _fetch_token_key(session_cookie, user_id, int(token_id))
+
+
+def disable_user_token(session_cookie: str, user_id: int) -> None:
+    """Best-effort: disable the WebUI token in new-api (called on logout)."""
+    with _user_token_lock(user_id):
+        name = feature_flags.newapi_token_name()
+        group = feature_flags.newapi_token_group()
+        tokens = _list_tokens(session_cookie, user_id)
+        for item in tokens:
+            if str(item.get("name") or "") == name and str(item.get("group") or "") == group:
+                if item.get("status") == 1 and isinstance(item.get("id"), int):
+                    _set_token_status(session_cookie, user_id, item, 2)
+                return

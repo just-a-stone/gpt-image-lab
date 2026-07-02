@@ -87,6 +87,42 @@ class BrokerHttpTests(unittest.TestCase):
         with patch("codex_image.webui.newapi_broker.urllib.request.urlopen", side_effect=[_resp(existing), _resp(key_fail)]):
             self.assertIsNone(newapi_broker.ensure_api_token(self.session, 5))
 
+    def test_ensure_api_token_reenables_disabled(self) -> None:
+        disabled = {"success": True, "data": {"items": [
+            {"id": 10, "name": "feiyang-lab", "group": "image", "status": 2},
+        ], "total": 1}}
+        reenable_ok = {"success": True}
+        key = {"success": True, "data": "sk-token"}
+        with patch("codex_image.webui.newapi_broker.urllib.request.urlopen",
+                   side_effect=[_resp(disabled), _resp(reenable_ok), _resp(key)]):
+            token = newapi_broker.ensure_api_token(self.session, 5)
+        self.assertEqual(token, "sk-token")
+
+    def test_disable_user_token_disables_enabled(self) -> None:
+        enabled = {"success": True, "data": {"items": [
+            {"id": 10, "name": "feiyang-lab", "group": "image", "status": 1},
+        ], "total": 1}}
+        disable_ok = {"success": True}
+        with patch("codex_image.webui.newapi_broker.urllib.request.urlopen",
+                   side_effect=[_resp(enabled), _resp(disable_ok)]):
+            newapi_broker.disable_user_token(self.session, 5)
+
+    def test_disable_user_token_noop_when_already_disabled(self) -> None:
+        disabled = {"success": True, "data": {"items": [
+            {"id": 10, "name": "feiyang-lab", "group": "image", "status": 2},
+        ], "total": 1}}
+        with patch("codex_image.webui.newapi_broker.urllib.request.urlopen",
+                   side_effect=[_resp(disabled)]):
+            newapi_broker.disable_user_token(self.session, 5)
+
+    def test_disable_user_token_noop_when_not_found(self) -> None:
+        other = {"success": True, "data": {"items": [
+            {"id": 10, "name": "other", "group": "default", "status": 1},
+        ], "total": 1}}
+        with patch("codex_image.webui.newapi_broker.urllib.request.urlopen",
+                   side_effect=[_resp(other)]):
+            newapi_broker.disable_user_token(self.session, 5)
+
 
 class DecodeRequestSessionTests(unittest.TestCase):
     def test_returns_none_when_disabled(self) -> None:

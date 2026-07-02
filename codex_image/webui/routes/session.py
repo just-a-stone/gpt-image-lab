@@ -101,6 +101,11 @@ def register_session_routes(app: FastAPI, ctx: WebUIContext) -> None:
     @app.delete("/api/newapi/logout")
     def newapi_logout(request: Request, response: Response) -> dict[str, Any]:
         check_request_origin(request)
+        session_cookie = request.cookies.get(feature_flags.newapi_cookie_name(), "")
+        if session_cookie:
+            decoded = newapi_broker.decode_request_session(session_cookie)
+            if decoded and isinstance(decoded.get("id"), int):
+                newapi_broker.disable_user_token(session_cookie, decoded["id"])
         clear_owner_cookie(response)
         return {"ok": True}
 
