@@ -13319,7 +13319,7 @@
   }
   function isByokActive() {
     const creds = getByokCreds();
-    return Boolean(creds && creds.apiKey.trim());
+    return Boolean(creds && creds.apiKey.trim() && creds.enabled);
   }
   function saveByokCreds(creds) {
     localStorage.setItem(BYOK_STORAGE_KEY, JSON.stringify(creds));
@@ -13405,15 +13405,14 @@
     keyInput.value = creds?.apiKey || "";
     baseUrlInput.value = (byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : creds?.baseUrl) || DEFAULT_BYOK_BASE_URL;
     modelInput.value = creds?.imageModel || "";
-    enabledToggle.checked = true;
-    enabledToggle.disabled = true;
+    enabledToggle.checked = creds?.enabled ?? true;
     applyBaseUrlLock(baseUrlInput);
     const persist = () => {
       saveByokCreds({
         apiKey: keyInput.value.trim(),
         baseUrl: byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : baseUrlInput.value.trim(),
         imageModel: modelInput.value.trim(),
-        enabled: true
+        enabled: enabledToggle.checked
       });
       updateByokIndicator();
       refreshRunButton();
@@ -13468,8 +13467,8 @@
       <input id="byokImageModelInput" type="text" autocomplete="off" placeholder="gpt-image-2" />
     </label>
     <label class="byok-checkbox">
-      <input id="byokEnabledToggle" type="checkbox" checked disabled />
-      <span>\u542F\u7528 BYOK\uFF08\u59CB\u7EC8\u5F00\u542F\uFF09</span>
+      <input id="byokEnabledToggle" type="checkbox" checked />
+      <span>\u542F\u7528 BYOK</span>
     </label>
     <div class="byok-popover-actions">
       <button id="byokSaveButton" type="button" class="primary-button">\u4FDD\u5B58</button>
@@ -13500,6 +13499,9 @@
   var newapiUsername = "";
   function isNewapiActive() {
     return newapiActive;
+  }
+  function getNewapiUsername() {
+    return newapiUsername;
   }
   function persistActive(active, username) {
     newapiActive = active;
@@ -13532,6 +13534,18 @@
       button.title = "\u4F7F\u7528\u5DF2\u767B\u5F55\u7684 new-api \u8D26\u53F7\u4E00\u952E\u51FA\u56FE";
     }
   }
+  function renderStatusIndicator() {
+    if (!newapiActive) return;
+    const els44 = getLegacyBridge().els;
+    const text = newapiUsername ? `\u{1FA84} new-api \xB7 ${newapiUsername}` : "\u{1FA84} new-api \xB7 \u5DF2\u767B\u5F55";
+    if (els44?.authSourceDetail) {
+      els44.authSourceDetail.textContent = text;
+      els44.authSourceDetail.title = text;
+    }
+    if (els44?.apiStatus) {
+      els44.apiStatus.className = "status-dot ok";
+    }
+  }
   async function refreshNewapiStatus() {
     if (!newapiEnabled) {
       newapiActive = false;
@@ -13558,6 +13572,7 @@
       persistActive(false, "");
     }
     updateIndicator();
+    renderStatusIndicator();
     refreshRunButton2();
   }
   async function triggerLogin() {
@@ -13565,10 +13580,13 @@
       const resp = await fetch("/api/newapi/login", { method: "POST", credentials: "include" });
       if (resp.ok) {
         const data = await resp.json();
-        persistActive(true, String(data.username || ""));
+        const username = String(data.username || "");
+        persistActive(true, username);
         updateIndicator();
+        renderStatusIndicator();
         refreshRunButton2();
         getLegacyBridge().methods.updateRequestPreview?.();
+        getLegacyBridge().methods.setStatus?.(username ? `\u5DF2\u901A\u8FC7 new-api \u767B\u5F55\uFF1A${username}` : "\u5DF2\u901A\u8FC7 new-api \u767B\u5F55", "ok");
         return;
       }
     } catch {
@@ -29199,7 +29217,7 @@ ${hint}` : hint;
       state8.authStatus = data.auth || null;
       renderAuthSource(state8.authStatus);
       const effectiveAvailable = state8.authAvailable || isByokActive() || isNewapiActive();
-      els9.apiStatus.className = `status-dot ${state8.authAvailable ? "ok" : "error"}`;
+      els9.apiStatus.className = `status-dot ${effectiveAvailable ? "ok" : "error"}`;
       els9.runButton.disabled = !effectiveAvailable;
       if (!effectiveAvailable) {
         setStatus7(translate("auth.missingCodexSession"), "error");
@@ -29267,6 +29285,10 @@ ${hint}` : hint;
     updateModeSpecificSettings(selected);
   }
   function authSourceDetailText(auth) {
+    if (isNewapiActive()) {
+      const name = getNewapiUsername();
+      return name ? `\u{1FA84} new-api \xB7 ${name}` : "\u{1FA84} new-api \xB7 \u5DF2\u767B\u5F55";
+    }
     if (!auth) return translate("auth.checking");
     const selected = sourceLabel(auth.selected_source);
     const effectiveApi = auth.effective_source === "api";

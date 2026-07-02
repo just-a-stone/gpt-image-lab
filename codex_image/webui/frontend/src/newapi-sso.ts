@@ -53,6 +53,19 @@ function updateIndicator(): void {
   }
 }
 
+function renderStatusIndicator(): void {
+  if (!newapiActive) return; // when inactive, leave auth-source in charge of the detail/dot
+  const els = getLegacyBridge().els;
+  const text = newapiUsername ? `🪄 new-api · ${newapiUsername}` : "🪄 new-api · 已登录";
+  if (els?.authSourceDetail) {
+    els.authSourceDetail.textContent = text;
+    els.authSourceDetail.title = text;
+  }
+  if (els?.apiStatus) {
+    els.apiStatus.className = "status-dot ok";
+  }
+}
+
 export async function refreshNewapiStatus(): Promise<void> {
   if (!newapiEnabled) {
     newapiActive = false;
@@ -79,6 +92,7 @@ export async function refreshNewapiStatus(): Promise<void> {
     persistActive(false, "");
   }
   updateIndicator();
+  renderStatusIndicator();
   refreshRunButton();
 }
 
@@ -87,10 +101,13 @@ async function triggerLogin(): Promise<void> {
     const resp = await fetch("/api/newapi/login", { method: "POST", credentials: "include" });
     if (resp.ok) {
       const data = await resp.json();
-      persistActive(true, String(data.username || ""));
+      const username = String(data.username || "");
+      persistActive(true, username);
       updateIndicator();
+      renderStatusIndicator();
       refreshRunButton();
       getLegacyBridge().methods.updateRequestPreview?.();
+      getLegacyBridge().methods.setStatus?.(username ? `已通过 new-api 登录：${username}` : "已通过 new-api 登录", "ok");
       return;
     }
   } catch {

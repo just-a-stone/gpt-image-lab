@@ -31,7 +31,7 @@ export function getByokCreds(): ByokCreds | null {
 
 export function isByokActive(): boolean {
   const creds = getByokCreds();
-  return Boolean(creds && creds.apiKey.trim());
+  return Boolean(creds && creds.apiKey.trim() && creds.enabled);
 }
 
 export function saveByokCreds(creds: ByokCreds): void {
@@ -129,8 +129,7 @@ function bindByokPopover(): void {
   keyInput.value = creds?.apiKey || "";
   baseUrlInput.value = (byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : creds?.baseUrl) || DEFAULT_BYOK_BASE_URL;
   modelInput.value = creds?.imageModel || "";
-  enabledToggle.checked = true;
-  enabledToggle.disabled = true;
+  enabledToggle.checked = creds?.enabled ?? true;
   applyBaseUrlLock(baseUrlInput);
 
   const persist = (): void => {
@@ -138,7 +137,7 @@ function bindByokPopover(): void {
       apiKey: keyInput.value.trim(),
       baseUrl: byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : baseUrlInput.value.trim(),
       imageModel: modelInput.value.trim(),
-      enabled: true,
+      enabled: enabledToggle.checked,
     });
     updateByokIndicator();
     refreshRunButton();
@@ -197,8 +196,8 @@ function injectByokUi(): void {
       <input id="byokImageModelInput" type="text" autocomplete="off" placeholder="gpt-image-2" />
     </label>
     <label class="byok-checkbox">
-      <input id="byokEnabledToggle" type="checkbox" checked disabled />
-      <span>启用 BYOK（始终开启）</span>
+      <input id="byokEnabledToggle" type="checkbox" checked />
+      <span>启用 BYOK</span>
     </label>
     <div class="byok-popover-actions">
       <button id="byokSaveButton" type="button" class="primary-button">保存</button>

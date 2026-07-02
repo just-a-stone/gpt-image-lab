@@ -2,7 +2,7 @@ import { getLegacyBridge } from "./state";
 import { updateModeSpecificSettings } from "./api-mode-settings";
 import { formatTranslation, translate } from "./i18n";
 import { isByokActive } from "./byok";
-import { isNewapiActive } from "./newapi-sso";
+import { getNewapiUsername, isNewapiActive } from "./newapi-sso";
 
 const bridge = getLegacyBridge();
 const state = bridge.state;
@@ -32,7 +32,7 @@ export async function refreshHealth(): Promise<void> {
     state.authStatus = data.auth || null;
     renderAuthSource(state.authStatus);
     const effectiveAvailable = state.authAvailable || isByokActive() || isNewapiActive();
-    els.apiStatus.className = `status-dot ${state.authAvailable ? "ok" : "error"}`;
+    els.apiStatus.className = `status-dot ${effectiveAvailable ? "ok" : "error"}`;
     els.runButton.disabled = !effectiveAvailable;
     if (!effectiveAvailable) {
       setStatus(translate("auth.missingCodexSession"), "error");
@@ -105,6 +105,10 @@ export function applyAuthSourceSelection(source: any): void {
 }
 
 export function authSourceDetailText(auth: any): string {
+  if (isNewapiActive()) {
+    const name = getNewapiUsername();
+    return name ? `🪄 new-api · ${name}` : "🪄 new-api · 已登录";
+  }
   if (!auth) return translate("auth.checking");
   const selected = sourceLabel(auth.selected_source);
   const effectiveApi = auth.effective_source === "api";
