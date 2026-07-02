@@ -1,6 +1,7 @@
 import "../legacy-app.js";
 import { initInputSourcesFeature } from "./input-sources";
 import { initByokFeature, syncSession } from "./byok";
+import { initNewapiSsoFeature } from "./newapi-sso";
 import { initImageEditorFeature } from "./image-editor";
 import { initImageStripFeature } from "./image-strip";
 import { initGalleryCategoriesFeature } from "./gallery-categories";
@@ -44,6 +45,7 @@ import { initI18nFeature } from "./i18n";
 
 initInputSourcesFeature();
 initByokFeature();
+initNewapiSsoFeature();
 initImageEditorFeature();
 initImageStripFeature();
 initGalleryCategoriesFeature();

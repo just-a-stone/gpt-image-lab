@@ -42,6 +42,7 @@ class WebUIContext:
     api_request_semaphores: dict[str, dict[str, Any]] = field(default_factory=dict)
     route_helpers: dict[str, Any] = field(default_factory=dict)
     byok_keys: dict[str, str] = field(default_factory=dict)
+    newapi_tokens: dict[str, str] = field(default_factory=dict)
     owner_store: OwnerStore | None = None
 
     def install_on_app_state(self) -> None:
@@ -67,6 +68,7 @@ class WebUIContext:
         self.app.state.api_request_semaphores = self.api_request_semaphores
         self.app.state.route_helpers = self.route_helpers
         self.app.state.byok_keys = self.byok_keys
+        self.app.state.newapi_tokens = self.newapi_tokens
         if self.owner_store is not None:
             self.app.state.owner_store = self.owner_store
         if self.queue_manager is not None:

@@ -4,6 +4,7 @@ from typing import Any
 
 from fastapi import Body, FastAPI, HTTPException, Request, Response
 
+from codex_image.webui import feature_flags, newapi_broker
 from codex_image.webui.context import WebUIContext
 from codex_image.webui.owner import (
     clear_owner_cookie,
@@ -40,3 +41,61 @@ def register_session_routes(app: FastAPI, ctx: WebUIContext) -> None:
         if owner_id is None:
             return {"ok": False}
         return {"ok": True, "owner": owner_id[:6]}
+
+    def _broker_newapi(request: Request) -> dict[str, Any] | None:
+        if not feature_flags.newapi_enabled() or owner_store is None:
+            return None
+        session_cookie = request.cookies.get(feature_flags.newapi_cookie_name(), "")
+        if not session_cookie:
+            return None
+        decoded = newapi_broker.decode_request_session(session_cookie)
+        if not decoded:
+            return None
+        candidate_id = decoded.get("id")
+        if not isinstance(candidate_id, int):
+            return None
+        user = newapi_broker.verify_user(session_cookie, candidate_id)
+        if not user:
+            return None
+        username = str(user.get("username") or decoded.get("username") or "").strip()
+        authoritative_id = user.get("id")
+        if not isinstance(authoritative_id, int) or not username:
+            return None
+        token = newapi_broker.ensure_api_token(session_cookie, authoritative_id)
+        if not token:
+            return None
+        owner_id = owner_store.get_or_create(compute_key_hash(username))
+        ctx.newapi_tokens[owner_id] = token
+        return {"owner_id": owner_id, "username": username, "user_id": authoritative_id}
+
+    @app.get("/api/newapi/status")
+    def newapi_status(request: Request, response: Response) -> dict[str, Any]:
+        if not feature_flags.newapi_enabled():
+            return {"ok": False, "enabled": False}
+        cached_owner = resolve_owner(request)
+        if cached_owner and ctx.newapi_tokens.get(cached_owner):
+            return {"ok": True, "enabled": True, "username": "", "cached": True}
+        result = _broker_newapi(request)
+        if result is None:
+            return {"ok": False, "enabled": True}
+        set_owner_cookie(response, result["owner_id"])
+        return {"ok": True, "enabled": True, "username": result["username"]}
+
+    @app.post("/api/newapi/login")
+    def newapi_login(request: Request, response: Response) -> dict[str, Any]:
+        if not feature_flags.newapi_enabled():
+            raise HTTPException(status_code=503, detail="new-api integration is not configured")
+        result = _broker_newapi(request)
+        if result is None:
+            raise HTTPException(status_code=401, detail="new-api session not found or invalid")
+        set_owner_cookie(response, result["owner_id"])
+        return {"ok": True, "username": result["username"], "owner": result["owner_id"][:6]}
+
+    @app.delete("/api/newapi/logout")
+    def newapi_logout(request: Request, response: Response) -> dict[str, Any]:
+        owner_id = resolve_owner(request)
+        if owner_id:
+            ctx.newapi_tokens.pop(owner_id, None)
+        clear_owner_cookie(response)
+        return {"ok": True}
+

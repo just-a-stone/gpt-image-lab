@@ -23,6 +23,21 @@ services:
       # 用户身份隔离的签名密钥（多用户部署必须固定，否则重启后所有人需重新建立会话）
       # 生产环境请用 `openssl rand -hex 32` 生成一个固定值替换
       - WEBUI_OWNER_SECRET=CHANGE_ME_TO_A_RANDOM_64_HEX
+      # ===== new-api 登录复用（静默 SSO）=====
+      # 前提：new-api 已设置 COOKIE_DOMAIN=api.feiyang.click（使其 session cookie 可被子域共享）
+      # 本 WebUI 部署在 new-api 的子域（如 img.api.feiyang.click）
+      # 启用后，用户在 new-api 登录过即静默出图；留空 WEBUI_NEWAPI_BASE_URL 则关闭该功能
+      - WEBUI_NEWAPI_BASE_URL=https://api.feiyang.click
+      # 填入 new-api 的 SESSION_SECRET（多节点部署本就已设置的同一个值），用于验签 session cookie
+      - WEBUI_NEWAPI_SESSION_SECRET=CHANGE_ME_NEWAPI_SESSION_SECRET
+      # new-api session cookie 名（默认 session）
+      - WEBUI_NEWAPI_COOKIE_NAME=session
+      # 为每个用户在 new-api 自动创建/复用的专属 token 名
+      - WEBUI_NEWAPI_TOKEN_NAME=feiyang-lab
+      # 该 token 所属分组（计费分组）
+      - WEBUI_NEWAPI_TOKEN_GROUP=image
+      # 出图模型名（需在 new-api 的 image 分组下可用）
+      - WEBUI_NEWAPI_IMAGE_MODEL=gpt-image-2
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8787/api/health', timeout=5).status==200 else 1)"]
       interval: 30s

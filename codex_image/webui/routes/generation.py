@@ -39,6 +39,29 @@ def _byok_creds(
     }
 
 
+def _effective_creds(owner: str, byok: dict[str, str] | None, ctx: WebUIContext) -> dict[str, str] | None:
+    """Resolve the per-request API credentials to use.
+
+    Priority: form-pasted BYOK > new-api SSO token (server-brokered) > None.
+    A new-api session produces credentials shaped exactly like BYOK so the
+    downstream execution path is reused unchanged.
+    """
+    if byok:
+        return byok
+    token = ctx.newapi_tokens.get(owner) if owner else None
+    if token:
+        from codex_image.webui import feature_flags
+
+        base_url = feature_flags.newapi_base_url()
+        if base_url:
+            return {
+                "api_key": token,
+                "base_url": base_url,
+                "image_model": feature_flags.newapi_image_model(),
+            }
+    return None
+
+
 def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
     h = ctx.route_helpers
 
@@ -73,10 +96,11 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
     ) -> dict[str, Any]:
         owner = resolve_owner(request) or ""
         byok = _byok_creds(byok_api_key, byok_base_url, byok_image_model)
-        if not byok and not ctx.auth_checker():
+        creds = _effective_creds(owner, byok, ctx)
+        if not creds and not ctx.auth_checker():
             raise HTTPException(status_code=401, detail="Codex auth is not available")
-        if byok and byok["image_model"]:
-            model = byok["image_model"]
+        if creds and creds["image_model"]:
+            model = creds["image_model"]
 
         gallery_refs, gallery_data_urls = _resolve_gallery_refs(ctx.gallery_storage, gallery_image_ids or [])
         uploaded_assets = await h["save_reference_assets"](reference_images or [], owner=owner)
@@ -94,12 +118,12 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
         fidelity = _normalize_prompt_fidelity(prompt_fidelity)
         model_prompt = append_ratio_prompt_instruction(h["model_prompt_for_fidelity"](prompt, prompt_for_model, fidelity), ratio)
         prompt_constraints, guard_instructions = h["prompt_guard_context"](prompt, fidelity)
-        auth_source = "api" if byok else (ctx.auth_settings.read_source() if not h["client_factory_overridden"] else "codex")
-        effective_api_provider_id = "byok" if byok else h["request_api_provider_id"](auth_source, api_provider_id)
-        effective_api_provider_name = "BYOK" if byok else h["request_api_provider_name"](auth_source, effective_api_provider_id)
-        effective_api_mode = "images" if byok else h["request_api_mode"](auth_source, api_mode, effective_api_provider_id)
-        effective_codex_mode = None if byok else h["request_codex_mode"](auth_source, codex_mode)
-        effective_api_images_concurrency = 4 if byok else h["request_api_images_concurrency"](auth_source, effective_api_provider_id)
+        auth_source = "api" if creds else (ctx.auth_settings.read_source() if not h["client_factory_overridden"] else "codex")
+        effective_api_provider_id = ("byok" if byok else "newapi") if creds else h["request_api_provider_id"](auth_source, api_provider_id)
+        effective_api_provider_name = ("BYOK" if byok else "new-api") if creds else h["request_api_provider_name"](auth_source, effective_api_provider_id)
+        effective_api_mode = "images" if creds else h["request_api_mode"](auth_source, api_mode, effective_api_provider_id)
+        effective_codex_mode = None if creds else h["request_codex_mode"](auth_source, codex_mode)
+        effective_api_images_concurrency = 4 if creds else h["request_api_images_concurrency"](auth_source, effective_api_provider_id)
         requested_backend = h["backend_for_submit"](auth_source, effective_api_mode, effective_codex_mode)
         transport_mode = effective_api_mode or effective_codex_mode
         web_search_enabled = bool(web_search) and requested_backend.endswith("_responses")
@@ -170,12 +194,12 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
             params["api_provider_name"] = effective_api_provider_name
         if auth_source == "api" and effective_api_mode == "images":
             params["api_images_concurrency"] = effective_api_images_concurrency
-        if byok:
-            ctx.byok_keys[task.task_id] = byok["api_key"]
-            if byok["base_url"]:
-                params["byok_base_url"] = byok["base_url"]
-            if byok["image_model"]:
-                params["byok_image_model"] = byok["image_model"]
+        if creds:
+            ctx.byok_keys[task.task_id] = creds["api_key"]
+            if creds["base_url"]:
+                params["byok_base_url"] = creds["base_url"]
+            if creds["image_model"]:
+                params["byok_image_model"] = creds["image_model"]
         metadata = _write_queued_metadata(
             ctx.storage,
             task.task_id,
@@ -233,10 +257,11 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
     ) -> dict[str, Any]:
         owner = resolve_owner(request) or ""
         byok = _byok_creds(byok_api_key, byok_base_url, byok_image_model)
-        if not byok and not ctx.auth_checker():
+        creds = _effective_creds(owner, byok, ctx)
+        if not creds and not ctx.auth_checker():
             raise HTTPException(status_code=401, detail="Codex auth is not available")
-        if byok and byok["image_model"]:
-            model = byok["image_model"]
+        if creds and creds["image_model"]:
+            model = creds["image_model"]
 
         if not images and not _dedupe_preserve_order(gallery_image_ids or []) and not _dedupe_preserve_order(reference_asset_ids or []):
             raise HTTPException(status_code=400, detail="At least one image is required")
@@ -261,12 +286,12 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
         model_prompt = append_ratio_prompt_instruction(h["model_prompt_for_fidelity"](prompt, prompt_for_model, fidelity), ratio)
         prompt_constraints, guard_instructions = h["prompt_guard_context"](prompt, fidelity)
         effective_input_fidelity = input_fidelity if image_model_supports_input_fidelity(model) else None
-        auth_source = "api" if byok else (ctx.auth_settings.read_source() if not h["client_factory_overridden"] else "codex")
-        effective_api_provider_id = "byok" if byok else h["request_api_provider_id"](auth_source, api_provider_id)
-        effective_api_provider_name = "BYOK" if byok else h["request_api_provider_name"](auth_source, effective_api_provider_id)
-        effective_api_mode = "images" if byok else h["request_api_mode"](auth_source, api_mode, effective_api_provider_id)
-        effective_codex_mode = None if byok else h["request_codex_mode"](auth_source, codex_mode)
-        effective_api_images_concurrency = 4 if byok else h["request_api_images_concurrency"](auth_source, effective_api_provider_id)
+        auth_source = "api" if creds else (ctx.auth_settings.read_source() if not h["client_factory_overridden"] else "codex")
+        effective_api_provider_id = ("byok" if byok else "newapi") if creds else h["request_api_provider_id"](auth_source, api_provider_id)
+        effective_api_provider_name = ("BYOK" if byok else "new-api") if creds else h["request_api_provider_name"](auth_source, effective_api_provider_id)
+        effective_api_mode = "images" if creds else h["request_api_mode"](auth_source, api_mode, effective_api_provider_id)
+        effective_codex_mode = None if creds else h["request_codex_mode"](auth_source, codex_mode)
+        effective_api_images_concurrency = 4 if creds else h["request_api_images_concurrency"](auth_source, effective_api_provider_id)
         requested_backend = h["backend_for_submit"](auth_source, effective_api_mode, effective_codex_mode)
         transport_mode = effective_api_mode or effective_codex_mode
         web_search_enabled = bool(web_search) and requested_backend.endswith("_responses")
@@ -345,12 +370,12 @@ def register_generation_routes(app: FastAPI, ctx: WebUIContext) -> None:
             params["api_provider_name"] = effective_api_provider_name
         if auth_source == "api" and effective_api_mode == "images":
             params["api_images_concurrency"] = effective_api_images_concurrency
-        if byok:
-            ctx.byok_keys[task.task_id] = byok["api_key"]
-            if byok["base_url"]:
-                params["byok_base_url"] = byok["base_url"]
-            if byok["image_model"]:
-                params["byok_image_model"] = byok["image_model"]
+        if creds:
+            ctx.byok_keys[task.task_id] = creds["api_key"]
+            if creds["base_url"]:
+                params["byok_base_url"] = creds["base_url"]
+            if creds["image_model"]:
+                params["byok_image_model"] = creds["image_model"]
         metadata = _write_queued_metadata(
             ctx.storage,
             task.task_id,

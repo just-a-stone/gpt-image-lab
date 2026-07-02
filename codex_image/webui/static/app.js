@@ -13492,6 +13492,151 @@
     void syncByokBaseUrlLock();
   }
 
+  // codex_image/webui/frontend/src/newapi-sso.ts
+  var NEWAPI_ACTIVE_KEY = "ilab_newapi_active";
+  var NEWAPI_USERNAME_KEY = "ilab_newapi_username";
+  var newapiEnabled = false;
+  var newapiActive = false;
+  var newapiUsername = "";
+  function isNewapiActive() {
+    return newapiActive;
+  }
+  function persistActive(active, username) {
+    newapiActive = active;
+    newapiUsername = username;
+    if (active) {
+      localStorage.setItem(NEWAPI_ACTIVE_KEY, "1");
+      localStorage.setItem(NEWAPI_USERNAME_KEY, username);
+    } else {
+      localStorage.removeItem(NEWAPI_ACTIVE_KEY);
+      localStorage.removeItem(NEWAPI_USERNAME_KEY);
+    }
+  }
+  function refreshRunButton2() {
+    const bridge40 = getLegacyBridge();
+    const els44 = bridge40.els;
+    if (!els44?.runButton) return;
+    const byokActive = Boolean(bridge40.methods.isByokActive?.());
+    const available = Boolean(bridge40.state.authAvailable) || byokActive || newapiActive;
+    els44.runButton.disabled = !available;
+  }
+  function updateIndicator() {
+    const button = document.getElementById("newapiToggleButton");
+    if (!button) return;
+    button.classList.toggle("active", newapiActive);
+    if (newapiActive) {
+      button.textContent = newapiUsername ? `\u{1FA84} ${newapiUsername}` : "\u{1FA84} new-api \u5DF2\u767B\u5F55";
+      button.title = "\u5DF2\u901A\u8FC7 new-api \u767B\u5F55\uFF08\u70B9\u51FB\u9000\u51FA\uFF09";
+    } else {
+      button.textContent = "\u{1FA84} new-api \u767B\u5F55";
+      button.title = "\u4F7F\u7528\u5DF2\u767B\u5F55\u7684 new-api \u8D26\u53F7\u4E00\u952E\u51FA\u56FE";
+    }
+  }
+  async function refreshNewapiStatus() {
+    if (!newapiEnabled) {
+      newapiActive = false;
+      updateIndicator();
+      refreshRunButton2();
+      return;
+    }
+    try {
+      const resp = await fetch("/api/newapi/status", { credentials: "include" });
+      if (!resp.ok) {
+        persistActive(false, "");
+        updateIndicator();
+        refreshRunButton2();
+        return;
+      }
+      const data = await resp.json();
+      if (data?.ok) {
+        const username = String(data.username || localStorage.getItem(NEWAPI_USERNAME_KEY) || "");
+        persistActive(true, username);
+      } else {
+        persistActive(false, "");
+      }
+    } catch {
+      persistActive(false, "");
+    }
+    updateIndicator();
+    refreshRunButton2();
+  }
+  async function triggerLogin() {
+    try {
+      const resp = await fetch("/api/newapi/login", { method: "POST", credentials: "include" });
+      if (resp.ok) {
+        const data = await resp.json();
+        persistActive(true, String(data.username || ""));
+        updateIndicator();
+        refreshRunButton2();
+        getLegacyBridge().methods.updateRequestPreview?.();
+        return;
+      }
+    } catch {
+    }
+    const base = document.documentElement.getAttribute("data-newapi-base-url");
+    if (base) {
+      const returnUrl = window.location.origin + window.location.pathname;
+      window.open(`${base}/login?redirect=${encodeURIComponent(returnUrl)}`, "_blank", "noopener");
+    }
+  }
+  async function triggerLogout() {
+    try {
+      await fetch("/api/newapi/logout", { method: "DELETE", credentials: "include" });
+    } catch {
+    }
+    persistActive(false, "");
+    updateIndicator();
+    refreshRunButton2();
+    getLegacyBridge().methods.updateRequestPreview?.();
+  }
+  function injectButton() {
+    const switcher = document.querySelector(".auth-source-switcher");
+    if (!switcher) return;
+    if (document.getElementById("newapiToggleButton")) return;
+    const button = document.createElement("button");
+    button.id = "newapiToggleButton";
+    button.type = "button";
+    button.className = "auth-source-button newapi-toggle-button";
+    button.textContent = "\u{1FA84} new-api \u767B\u5F55";
+    button.title = "\u4F7F\u7528\u5DF2\u767B\u5F55\u7684 new-api \u8D26\u53F7\u4E00\u952E\u51FA\u56FE";
+    button.addEventListener("click", () => {
+      if (newapiActive) {
+        void triggerLogout();
+      } else {
+        void triggerLogin();
+      }
+    });
+    switcher.appendChild(button);
+    updateIndicator();
+  }
+  async function initNewapiSsoFeature() {
+    injectButton();
+    if (localStorage.getItem(NEWAPI_ACTIVE_KEY) === "1") {
+      newapiActive = true;
+      newapiUsername = localStorage.getItem(NEWAPI_USERNAME_KEY) || "";
+      updateIndicator();
+      refreshRunButton2();
+    }
+    try {
+      const resp = await fetch("/api/health");
+      if (resp.ok) {
+        const data = await resp.json();
+        newapiEnabled = Boolean(data?.newapi_enabled);
+        if (data?.newapi_base_url) {
+          document.documentElement.setAttribute("data-newapi-base-url", String(data.newapi_base_url));
+        }
+      }
+    } catch {
+      newapiEnabled = false;
+    }
+    const button = document.getElementById("newapiToggleButton");
+    if (button) {
+      button.style.display = newapiEnabled ? "" : "none";
+    }
+    await refreshNewapiStatus();
+    Object.assign(getLegacyBridge().methods, { isNewapiActive, refreshNewapiStatus });
+  }
+
   // node_modules/konva/lib/Global.js
   var PI_OVER_180 = Math.PI / 180;
   function detectBrowser() {
@@ -29053,7 +29198,7 @@ ${hint}` : hint;
       state8.authAvailable = Boolean(data.auth_available);
       state8.authStatus = data.auth || null;
       renderAuthSource(state8.authStatus);
-      const effectiveAvailable = state8.authAvailable || isByokActive();
+      const effectiveAvailable = state8.authAvailable || isByokActive() || isNewapiActive();
       els9.apiStatus.className = `status-dot ${state8.authAvailable ? "ok" : "error"}`;
       els9.runButton.disabled = !effectiveAvailable;
       if (!effectiveAvailable) {
@@ -29144,6 +29289,7 @@ ${hint}` : hint;
     return translate("auth.notActive");
   }
   function currentAuthSource2() {
+    if (isNewapiActive()) return "api";
     if (isByokActive()) return "api";
     return state8.pendingAuthSource || state8.authStatus?.selected_source || "codex";
   }
@@ -29179,7 +29325,7 @@ ${hint}` : hint;
     host.insertBefore(indicator, host.firstElementChild);
     return indicator;
   }
-  function updateIndicator(host) {
+  function updateIndicator2(host) {
     scheduledFrames.delete(host);
     if (!host.isConnected) return;
     const indicator = ensureIndicator(host);
@@ -29201,7 +29347,7 @@ ${hint}` : hint;
   }
   function scheduleIndicatorUpdate(host) {
     if (scheduledFrames.has(host)) return;
-    scheduledFrames.set(host, window.requestAnimationFrame(() => updateIndicator(host)));
+    scheduledFrames.set(host, window.requestAnimationFrame(() => updateIndicator2(host)));
   }
   function watchButtonClassChanges(host) {
     const observer = new MutationObserver(() => scheduleIndicatorUpdate(host));
@@ -42439,6 +42585,7 @@ ${galleryText}`;
   // codex_image/webui/frontend/src/main.ts
   initInputSourcesFeature();
   initByokFeature();
+  initNewapiSsoFeature();
   initImageEditorFeature();
   initImageStripFeature();
   initGalleryCategoriesFeature();

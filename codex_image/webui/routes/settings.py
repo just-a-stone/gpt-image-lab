@@ -7,7 +7,7 @@ from fastapi import Body, FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import Response
 
 from codex_image.webui.context import WebUIContext
-from codex_image.webui.feature_flags import byok_base_url_locked
+from codex_image.webui.feature_flags import byok_base_url_locked, newapi_base_url, newapi_enabled
 from codex_image.webui.app_version import app_version_payload, open_portable_updater
 from codex_image.webui.settings_store import (
     MAX_COLOR_IMPORT_BYTES,
@@ -36,6 +36,8 @@ def register_settings_routes(app: FastAPI, ctx: WebUIContext) -> None:
             "source_data_root": str(ctx.source_data_root),
             "queue_worker_running": bool(queue_worker is not None and not queue_worker.done()),
             "byok_base_url_locked": byok_base_url_locked(),
+            "newapi_enabled": newapi_enabled(),
+            "newapi_base_url": newapi_base_url(),
         }
 
     @app.get("/api/app-version")

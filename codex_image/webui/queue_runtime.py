@@ -122,6 +122,17 @@ def _client_for_queue_channel(ctx: WebUIContext, channel: QueueChannel, metadata
                 "image_model": str(params.get("byok_image_model") or "").strip() or DEFAULT_IMAGE_MODEL,
             }
             return _api_client_from_settings(byok_settings, api_mode="images")
+        owner = str((metadata or {}).get("owner") or "").strip()
+        newapi_key = str(ctx.newapi_tokens.get(owner) or "").strip() if owner else ""
+        if newapi_key:
+            from . import feature_flags
+            if feature_flags.newapi_base_url():
+                newapi_settings = {
+                    "api_key": newapi_key,
+                    "base_url": feature_flags.newapi_base_url(),
+                    "image_model": feature_flags.newapi_image_model(),
+                }
+                return _api_client_from_settings(newapi_settings, api_mode="images")
         settings_payload = ctx.api_settings.read()
         provider_settings = ctx.api_settings.provider_settings(str(params.get("api_provider_id") or settings_payload.get("active_provider_id") or ""))
         api_mode = _normalize_api_mode(params.get("api_mode") or provider_settings.get("api_mode"))
