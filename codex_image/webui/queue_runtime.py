@@ -122,6 +122,11 @@ def _client_for_queue_channel(ctx: WebUIContext, channel: QueueChannel, metadata
                 "image_model": str(params.get("byok_image_model") or "").strip() or DEFAULT_IMAGE_MODEL,
             }
             return _api_client_from_settings(byok_settings, api_mode="images")
+        if str(params.get("api_provider_id") or "") == "byok":
+            raise RuntimeError(
+                "BYOK credentials unavailable (server may have restarted). "
+                "Please re-submit the task."
+            )
         settings_payload = ctx.api_settings.read()
         provider_settings = ctx.api_settings.provider_settings(str(params.get("api_provider_id") or settings_payload.get("active_provider_id") or ""))
         api_mode = _normalize_api_mode(params.get("api_mode") or provider_settings.get("api_mode"))
