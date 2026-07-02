@@ -84,6 +84,22 @@ class GobExtractionTests(unittest.TestCase):
         self.assertEqual(fields.get("username"), "bob")
         self.assertNotIn("group", fields)
 
+    def test_extract_skips_false_marker_with_invalid_value(self) -> None:
+        # A false "id" marker (from random bytes) followed by an out-of-range
+        # int should be skipped — the scanner moves to the real field.
+        false_marker = _gob_string("id") + _gob_int(-999)
+        real_data = _build_session_gob({"id": 5, "username": "alice"})
+        fields = _extract_gob_fields(false_marker + real_data)
+        self.assertEqual(fields.get("id"), 5)
+        self.assertEqual(fields.get("username"), "alice")
+
+    def test_extract_skips_false_marker_with_zero_id(self) -> None:
+        # Zero is invalid for a user id — scanner should skip it.
+        false_marker = _gob_string("id") + _gob_int(0)
+        real_data = _build_session_gob({"id": 42, "username": "carol", "status": 1})
+        fields = _extract_gob_fields(false_marker + real_data)
+        self.assertEqual(fields.get("id"), 42)
+
 
 class DecodeSessionCookieTests(unittest.TestCase):
     def _cookie(self, fields: dict[str, object], secret: bytes = SECRET, name: str = NAME, timestamp: int = 1_700_000_000) -> str:

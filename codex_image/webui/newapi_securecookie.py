@@ -59,25 +59,52 @@ def _read_gob_int(buf: bytes, pos: int) -> int | None:
     return decoded
 
 
-def _find_key_marker(gob: bytes, key: str) -> int:
+def _iter_key_markers(gob: bytes, key: str):
+    """Yield all positions where the gob string marker for *key* appears."""
     marker = bytes([len(key)]) + key.encode("utf-8")
-    return gob.find(marker)
+    start = 0
+    while True:
+        idx = gob.find(marker, start)
+        if idx < 0:
+            return
+        yield idx
+        start = idx + 1
+
+
+def _valid_string_field(key: str, value: str) -> bool:
+    if not value or not value.isprintable():
+        return False
+    if key == "username":
+        return len(value) <= 100
+    if key == "group":
+        return len(value) <= 50
+    return False
+
+
+def _valid_int_field(key: str, value: int) -> bool:
+    if key == "id":
+        return 1 <= value <= 100_000_000
+    if key == "role":
+        return 1 <= value <= 100
+    if key == "status":
+        return 1 <= value <= 10
+    return False
 
 
 def _extract_gob_fields(gob: bytes) -> dict[str, Any]:
     fields: dict[str, Any] = {}
     for key in ("username", "group"):
-        idx = _find_key_marker(gob, key)
-        if idx >= 0:
+        for idx in _iter_key_markers(gob, key):
             value = _read_gob_string(gob, idx + len(key) + 1)
-            if value is not None:
+            if value is not None and _valid_string_field(key, value):
                 fields[key] = value
+                break
     for key in ("id", "role", "status"):
-        idx = _find_key_marker(gob, key)
-        if idx >= 0:
+        for idx in _iter_key_markers(gob, key):
             value = _read_gob_int(gob, idx + len(key) + 1)
-            if value is not None:
+            if value is not None and _valid_int_field(key, value):
                 fields[key] = value
+                break
     return fields
 
 
