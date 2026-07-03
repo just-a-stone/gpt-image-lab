@@ -86,7 +86,7 @@ export async function refreshNewapiStatus(): Promise<void> {
     if (data?.ok && data.username) {
       const creds = getByokCreds();
       const stored = localStorage.getItem(NEWAPI_USERNAME_KEY);
-      if (!creds || (creds.authSource === "newapi" && (!creds.apiKey || stored !== data.username))) {
+      if (!creds || !creds.apiKey.trim() || (creds.authSource === "newapi" && stored !== data.username)) {
         persistActive(false, data.username);
         await triggerLogin(true);
       } else {

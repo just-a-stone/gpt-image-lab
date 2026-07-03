@@ -13415,7 +13415,7 @@
     keyInput.value = creds?.apiKey || "";
     baseUrlInput.value = (byokBaseUrlLocked ? DEFAULT_BYOK_BASE_URL : creds?.baseUrl) || DEFAULT_BYOK_BASE_URL;
     modelInput.value = creds?.imageModel || "";
-    enabledToggle.checked = creds?.enabled ?? true;
+    enabledToggle.checked = true;
     applyBaseUrlLock(baseUrlInput);
     const persist = () => {
       saveByokCreds({
@@ -13478,7 +13478,7 @@
       <input id="byokImageModelInput" type="text" autocomplete="off" placeholder="gpt-image-2" />
     </label>
     <label class="byok-checkbox">
-      <input id="byokEnabledToggle" type="checkbox" checked />
+      <input id="byokEnabledToggle" type="checkbox" checked disabled />
       <span>\u542F\u7528 BYOK</span>
     </label>
     <div class="byok-popover-actions">
@@ -13576,7 +13576,7 @@
       if (data?.ok && data.username) {
         const creds = getByokCreds();
         const stored = localStorage.getItem(NEWAPI_USERNAME_KEY);
-        if (!creds || creds.authSource === "newapi" && (!creds.apiKey || stored !== data.username)) {
+        if (!creds || !creds.apiKey.trim() || creds.authSource === "newapi" && stored !== data.username) {
           persistActive(false, data.username);
           await triggerLogin(true);
         } else {
