@@ -21,6 +21,13 @@ function taskOutputUrls(task: any): string[] {
   return Array.isArray(task?.output_urls) ? task.output_urls : [];
 }
 
+function taskGeneratedCount(task: any): number {
+  const fn = getLegacyBridge().methods.taskGeneratedCount;
+  if (typeof fn === "function") return Number(fn(task)) || 0;
+  const value = Number.parseInt(task?.generated_count ?? "", 10);
+  return Number.isNaN(value) ? 0 : value;
+}
+
 function closePromptPopover(): void {
   const fn = getLegacyBridge().methods.closePromptPopover;
   if (typeof fn === "function") fn();
@@ -74,7 +81,7 @@ async function openShareDialog(button: HTMLElement, taskId: string): Promise<voi
     setStatus(translate("share.onlyCompleted"), "error");
     return;
   }
-  if (taskOutputUrls(task).length === 0) {
+  if (taskOutputUrls(task).length === 0 && taskGeneratedCount(task) <= 0) {
     setStatus(translate("share.noOutput"), "error");
     return;
   }

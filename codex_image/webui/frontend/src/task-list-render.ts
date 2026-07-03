@@ -50,6 +50,7 @@ const taskResolution = (...args: any[]) => legacyMethod("taskResolution", ...arg
 const taskInputPreviewUrls = (...args: any[]) => legacyMethod("taskInputPreviewUrls", ...args);
 const taskThumbnailUrls = (...args: any[]) => legacyMethod("taskThumbnailUrls", ...args);
 const taskOutputUrls = (...args: any[]) => legacyMethod("taskOutputUrls", ...args);
+const taskGeneratedCount = (...args: any[]) => legacyMethod("taskGeneratedCount", ...args);
 const taskImageBlockStates = (...args: any[]) => legacyMethod("taskImageBlockStates", ...args);
 const compressTaskImageBlockStates = (...args: any[]) => legacyMethod("compressTaskImageBlockStates", ...args);
 const taskImageStatusCounts = (...args: any[]) => legacyMethod("taskImageStatusCounts", ...args);
@@ -674,7 +675,7 @@ function taskCardActionsHtml(taskId: string, queueSection = "") {
   const shareLabel = escapeHtml(translate("share.button"));
   const task = state.tasks.find((t: any) => String(t.task_id) === taskId);
   const isShared = Boolean(task?.shared_at);
-  const hasOutput = taskOutputUrls(task).length > 0;
+  const hasOutput = taskOutputUrls(task).length > 0 || taskGeneratedCount(task) > 0;
   const shareButton = (isShared || !hasOutput) ? "" : `
         <button class="task-share-button" type="button" data-share-task-id="${taskId}" aria-label="${shareLabel}" title="${shareLabel}">
           <svg class="task-action-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">

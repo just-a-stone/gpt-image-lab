@@ -35185,6 +35185,7 @@ ${galleryText}`;
   var taskInputPreviewUrls = (...args) => legacyMethod29("taskInputPreviewUrls", ...args);
   var taskThumbnailUrls = (...args) => legacyMethod29("taskThumbnailUrls", ...args);
   var taskOutputUrls = (...args) => legacyMethod29("taskOutputUrls", ...args);
+  var taskGeneratedCount = (...args) => legacyMethod29("taskGeneratedCount", ...args);
   var taskImageBlockStates = (...args) => legacyMethod29("taskImageBlockStates", ...args);
   var compressTaskImageBlockStates = (...args) => legacyMethod29("compressTaskImageBlockStates", ...args);
   var taskImageStatusCounts = (...args) => legacyMethod29("taskImageStatusCounts", ...args);
@@ -35765,7 +35766,7 @@ ${galleryText}`;
     const shareLabel = escapeHtml13(translate("share.button"));
     const task = state19.tasks.find((t) => String(t.task_id) === taskId);
     const isShared = Boolean(task?.shared_at);
-    const hasOutput = taskOutputUrls(task).length > 0;
+    const hasOutput = taskOutputUrls(task).length > 0 || taskGeneratedCount(task) > 0;
     const shareButton = isShared || !hasOutput ? "" : `
         <button class="task-share-button" type="button" data-share-task-id="${taskId}" aria-label="${shareLabel}" title="${shareLabel}">
           <svg class="task-action-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
@@ -37289,6 +37290,12 @@ ${galleryText}`;
     if (typeof fn === "function") return fn(task) || [];
     return Array.isArray(task?.output_urls) ? task.output_urls : [];
   }
+  function taskGeneratedCount2(task) {
+    const fn = getLegacyBridge().methods.taskGeneratedCount;
+    if (typeof fn === "function") return Number(fn(task)) || 0;
+    const value = Number.parseInt(task?.generated_count ?? "", 10);
+    return Number.isNaN(value) ? 0 : value;
+  }
   function closePromptPopover6() {
     const fn = getLegacyBridge().methods.closePromptPopover;
     if (typeof fn === "function") fn();
@@ -37329,7 +37336,7 @@ ${galleryText}`;
       setStatus17(translate("share.onlyCompleted"), "error");
       return;
     }
-    if (taskOutputUrls2(task).length === 0) {
+    if (taskOutputUrls2(task).length === 0 && taskGeneratedCount2(task) <= 0) {
       setStatus17(translate("share.noOutput"), "error");
       return;
     }
@@ -40120,7 +40127,7 @@ ${galleryText}`;
     const elapsed = formatDurationTenths2(elapsedMs);
     return `<span class="elapsed-timer" aria-label="${elapsed}" data-preview-elapsed="${escapeHtml18(kind)}" data-preview-start="${escapeHtml18(startValue || "")}">${elapsedTimerMarkup2(elapsedMs)}</span>`;
   }
-  function taskGeneratedCount(task, fallback = 0) {
+  function taskGeneratedCount3(task, fallback = 0) {
     const visibleCompleted = taskVisibleCompletedCount(task);
     if (visibleCompleted || Array.isArray(task?.outputs) || Array.isArray(task?.output_urls) || task?.output_url) {
       return visibleCompleted;
@@ -40198,7 +40205,7 @@ ${galleryText}`;
       elapsedPartMarkup: elapsedPartMarkup2,
       elapsedTimerMarkup: elapsedTimerMarkup2,
       elapsedTimerSpan,
-      taskGeneratedCount,
+      taskGeneratedCount: taskGeneratedCount3,
       taskTotalCount,
       taskOutputIndex,
       taskProgressStartValue: taskProgressStartValue2
@@ -40275,7 +40282,7 @@ ${galleryText}`;
   var canAcceptTaskSuccesses3 = (...args) => legacyMethod38("canAcceptTaskSuccesses", ...args);
   var taskRetryStateText4 = (...args) => legacyMethod38("taskRetryStateText", ...args);
   var elapsedTimerSpan2 = (...args) => legacyMethod38("elapsedTimerSpan", ...args);
-  var taskGeneratedCount2 = (...args) => legacyMethod38("taskGeneratedCount", ...args);
+  var taskGeneratedCount4 = (...args) => legacyMethod38("taskGeneratedCount", ...args);
   var taskTotalCount2 = (...args) => legacyMethod38("taskTotalCount", ...args);
   var taskOutputIndex2 = (...args) => legacyMethod38("taskOutputIndex", ...args);
   var taskProgressStartValue3 = (...args) => legacyMethod38("taskProgressStartValue", ...args);
@@ -40389,10 +40396,10 @@ ${galleryText}`;
       return ["failed", taskId, status, outputUrls, selectedIndexes, taskFailureMessage2(task), taskRetryStateText4(task), canRetryFailedTask3(task), canAcceptTaskSuccesses3(task)].join("|");
     }
     if (status === "submitting" || status === "queued") {
-      return ["waiting", taskId, status, outputUrls, selectedIndexes, taskGeneratedCount2(task, 0), taskTotalCount2(task), size, task.last_error || task.error || "", taskRetryStateText4(task)].join("|");
+      return ["waiting", taskId, status, outputUrls, selectedIndexes, taskGeneratedCount4(task, 0), taskTotalCount2(task), size, task.last_error || task.error || "", taskRetryStateText4(task)].join("|");
     }
     if (status === "running") {
-      return ["running", taskId, outputUrls, selectedIndexes, taskGeneratedCount2(task, 0), taskTotalCount2(task), size, task.mode || "", taskRetryStateText4(task), taskRunningFailureKey(task)].join("|");
+      return ["running", taskId, outputUrls, selectedIndexes, taskGeneratedCount4(task, 0), taskTotalCount2(task), size, task.mode || "", taskRetryStateText4(task), taskRunningFailureKey(task)].join("|");
     }
     if (outputUrls) {
       return ["output", taskId, status, outputUrls, selectedIndexes, previewPromptKey(task)].join("|");
@@ -40940,7 +40947,7 @@ ${galleryText}`;
   }
   function runningProgressCard(task, visibleOutputCount) {
     const elapsed = elapsedTimerSpan2("running", taskProgressStartValue3(task));
-    const generated = taskGeneratedCount2(task, visibleOutputCount);
+    const generated = taskGeneratedCount4(task, visibleOutputCount);
     const total = taskTotalCount2(task);
     const size = escapeHtml19(task.params?.size || currentSize2());
     const retryState = taskRetryStateText4(task);
@@ -40963,7 +40970,7 @@ ${galleryText}`;
   function waitingProgressCard(task, visibleOutputCount) {
     const elapsedFrom = task.queued_at || task.updated_at || task.created_at;
     const elapsed = elapsedTimerSpan2("waiting", elapsedFrom);
-    const generated = taskGeneratedCount2(task, visibleOutputCount);
+    const generated = taskGeneratedCount4(task, visibleOutputCount);
     const total = taskTotalCount2(task);
     const size = escapeHtml19(task.params?.size || currentSize2());
     const retryReason = task.last_error ? `<p>${escapeHtml19(formatTranslation("preview.lastError", { error: task.last_error }))}</p>` : "";
@@ -40984,7 +40991,7 @@ ${galleryText}`;
   `;
   }
   function failureSummaryCard(task, visibleOutputCount) {
-    const generated = taskGeneratedCount2(task, visibleOutputCount);
+    const generated = taskGeneratedCount4(task, visibleOutputCount);
     const failed = Number.parseInt(task?.failed_count ?? "", 10);
     const failedCount = Number.isNaN(failed) ? Math.max(0, taskTotalCount2(task) - generated) : failed;
     const total = taskTotalCount2(task);
